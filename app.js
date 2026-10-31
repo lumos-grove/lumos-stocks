@@ -125,8 +125,7 @@ function renderCards(d) {
       <div class="hcard reveal" data-i="${i}" role="button" tabindex="0" aria-label="查看 ${h.name} K 线">
         <div class="hcard-head">
           <div class="hcard-title">
-            <h3>${h.name}</h3>
-            <div class="hcard-meta">${h.code}</div>
+            <div class="hcard-name-line"><h3>${h.name}</h3><span class="hcard-meta">${h.code}</span></div>
             <div class="hcard-days">已持有 ${h.holdDays} 天</div>
           </div>
           <div class="hcard-pnl ${pnlClass(h.pnl)}">
@@ -152,8 +151,7 @@ function renderCards(d) {
         </div>
         <div class="hcard-foot">
           <span class="hcard-foot-action">
-            <span>${h.tradeCount} 笔成交</span>
-            <span>查看 K 线与买卖点 →</span>
+            <span>${h.tradeCount} 笔成交</span><span class="hcard-foot-arrow">查看 K 线 ↗</span>
           </span>
           <span class="hcard-industry">${h.industry}${h.industryDetail ? ` · ${h.industryDetail}` : ""}</span>
         </div>
