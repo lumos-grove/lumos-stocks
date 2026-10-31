@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumos · 投资记录</title>
+<meta name="description" content="Lumos 的个人 A 股交易记录与原因记录。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">Lumos</span>
+    <span class="brand-sub">投资记录</span>
+  </div>
+  <nav class="topnav" aria-label="主导航">
+    <a href="index.html" class="active" aria-current="page">主页</a>
+    <a href="watchlist.html">自选</a>
+    <a href="blog.html">Memo</a>
+  </nav>
+  <div class="dateline" id="dateline"></div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="kicker reveal" id="hero-kicker"></p>
+    <h1 class="reveal" id="hero-quote"></h1>
+    <div class="ticker reveal" id="ticker"></div>
+  </section>
+
+  <section id="composition">
+    <div class="composition-grid">
+      <div class="panel reveal composition-panel">
+        <div class="panel-head"><h2>持仓构成</h2><span class="panel-tag">按成本</span></div>
+        <div class="donut-wrap">
+          <svg id="donut" viewBox="0 0 200 200" role="img" aria-label="个股持仓成本占比环形图"></svg>
+          <div class="donut-center"><div class="donut-center-num" id="donut-total"></div><div class="donut-center-label">持仓成本</div></div>
+        </div>
+        <ul class="legend composition-legend" id="donut-legend"></ul>
+      </div>
+      <div class="panel reveal industry-panel" id="industries">
+        <div class="panel-head"><h2>行业分布</h2><span class="panel-tag">申万一级 · 占入金</span></div>
+        <div class="industry-bars" id="industry-bars"></div>
+        <p class="panel-foot" id="industry-foot"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 最近交易 -->
+  <section id="recent">
+    <div class="section-head reveal">
+      <h2><span class="sec-no">01</span>最近交易</h2>
+    </div>
+    <div class="recent-strip reveal" id="recent-strip"></div>
+  </section>
+
+  <!-- 持仓与买入理由 -->
+  <section id="holdings">
+    <div class="section-head reveal">
+      <h2><span class="sec-no">03</span>正在持有</h2>
+    </div>
+    <div class="cards" id="holding-cards"></div>
+  </section>
+
+  <!-- 交易记录 -->
+  <section id="trades">
+    <div class="section-head reveal">
+      <h2><span class="sec-no">04</span>交易记录</h2>
+    </div>
+    <div class="journal-controls reveal">
+      <div class="journal-filters" id="trade-filters">
+        <button class="jfilter active" data-f="全部">全部</button>
+        <button class="jfilter" data-f="买入">买入</button>
+        <button class="jfilter" data-f="卖出">卖出</button>
+      </div>
+    </div>
+    <div class="panel reveal table-panel">
+      <table class="htable" id="ttable">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>标的</th>
+            <th>方向</th>
+            <th class="num">股数</th>
+            <th class="num">价格</th>
+            <th class="num">金额</th>
+            <th class="num">费用</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>Lumos · 投资记录 — 数据来自个人 Obsidian 仓库，快照日期 <span id="foot-date"></span>。</p>
+    <p class="fine">本页为个人投资过程记录，不构成任何投资建议。</p>
+  </footer>
+</main>
+
+<!-- 持仓 K 线弹窗 -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" hidden>
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h3 id="modal-title"></h3>
+        <p class="modal-sub" id="modal-sub"></p>
+      </div>
+      <button class="modal-close" id="modal-close" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-stats" id="modal-stats"></div>
+    <div class="chart-wrap">
+      <div class="chart-scroll" id="chart-scroll">
+        <canvas id="kline-chart"></canvas>
+      </div>
+    </div>
+    <div class="chart-legend">
+      <span><i class="lg lg-buy"></i>买入</span>
+      <span><i class="lg lg-sell"></i>卖出</span>
+      <span><i class="lg lg-cost"></i>持仓成本线</span>
+      <span class="chart-note">日 K 线（不复权，与成交价格同口径）</span>
+      <span class="chart-range" id="chart-range"></span>
+    </div>
+    <div class="modal-trades" id="modal-trades"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
