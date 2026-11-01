@@ -1,136 +1,201 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lumos · 投资记录</title>
-<meta name="description" content="Lumos 的个人 A 股交易记录与原因记录。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=4">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173a32">
+  <title>Lumos · 投资记录</title>
+  <meta name="description" content="Lumos 投资记录：组合、持仓、交易、自选与笔记。">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
 
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-mark">Lumos</span>
-    <span class="brand-sub">投资记录</span>
-  </div>
-  <nav class="topnav" aria-label="主导航">
-    <a href="index.html" class="active" aria-current="page">主页</a>
-    <a href="watchlist.html">自选</a>
-    <a href="blog.html">Memo</a>
-  </nav>
-  <div class="dateline" id="dateline"></div>
-</header>
+  <aside class="sidebar" id="sidebar" aria-label="主导航">
+    <div class="brand-block">
+      <a class="brand" href="#overview" aria-label="Lumos 总览">
+        <span class="brand-symbol" aria-hidden="true">L</span>
+        <span>Lumos<small>INVESTMENT JOURNAL</small></span>
+      </a>
+      <p>个人投资记录</p>
+    </div>
 
-<main>
-  <section class="hero">
-    <p class="kicker reveal" id="hero-kicker"></p>
-    <h1 class="reveal" id="hero-quote"></h1>
-    <div class="ticker reveal" id="ticker"></div>
-  </section>
+    <nav class="nav-list">
+      <a href="#overview" data-route="overview"><span class="nav-index">01</span>投资总览<span class="nav-arrow">↗</span></a>
+      <a href="#holdings" data-route="holdings"><span class="nav-index">02</span>我的持仓<span class="nav-count" id="nav-holding-count"></span></a>
+      <a href="#trades" data-route="trades"><span class="nav-index">03</span>交易记录<span class="nav-count" id="nav-trade-count"></span></a>
+      <a href="#watchlist" data-route="watchlist"><span class="nav-index">04</span>观察清单<span class="nav-count" id="nav-watchlist-count"></span></a>
+      <a href="#notes" data-route="notes"><span class="nav-index">05</span>投资笔记<span class="nav-count" id="nav-note-count"></span></a>
+    </nav>
 
-  <section id="composition">
-    <div class="composition-grid">
-      <div class="panel reveal composition-panel">
-        <div class="panel-head"><h2>持仓构成</h2><span class="panel-tag">按成本</span></div>
-        <div class="donut-wrap">
-          <svg id="donut" viewBox="0 0 200 200" role="img" aria-label="个股持仓成本占比环形图"></svg>
-          <div class="donut-center"><div class="donut-center-num" id="donut-total"></div><div class="donut-center-label">持仓成本</div></div>
+    <div class="sidebar-principle">
+      <span class="eyebrow">MY PRINCIPLE</span>
+      <button class="principle-quote" id="principle-quote" type="button" aria-label="切换投资原则" title="点击切换">
+        <span id="principle-text" aria-live="off"></span>
+      </button>
+      <div class="principle-meta"><span class="principle-line" aria-hidden="true"></span><span id="principle-index">01 / 06</span></div>
+    </div>
+
+    <div class="sidebar-foot">
+      <span class="status-dot" aria-hidden="true"></span>
+      <div>投资记录<small>收盘价格按日期更新</small></div>
+    </div>
+  </aside>
+  <button class="sidebar-backdrop" id="sidebar-backdrop" aria-label="关闭导航" tabindex="-1"></button>
+
+  <div class="workspace">
+    <header class="topbar">
+      <button class="menu-button" id="menu-button" aria-label="打开导航" aria-controls="sidebar" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+      <div class="breadcrumb"><span>Lumos</span><i>/</i><strong id="current-section">投资总览</strong></div>
+      <div class="snapshot"><span class="snapshot-dot"></span>收盘快照 <time id="data-date"></time></div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <noscript><p class="notice">请开启 JavaScript，以查看投资数据。</p></noscript>
+
+      <section class="view" id="view-overview" data-view="overview" aria-labelledby="overview-title">
+        <div class="hero">
+          <div>
+            <p class="eyebrow hero-eyebrow">INVESTMENT JOURNAL · SINCE <span id="first-trade-date"></span></p>
+            <h1 id="overview-title">组合<span>概览</span></h1>
+          </div>
+          <div class="hero-stamp" aria-hidden="true">
+            <span>投资记录</span><strong>L</strong><small>LUMOS<br>FINANCE</small>
+          </div>
         </div>
-        <ul class="legend composition-legend" id="donut-legend"></ul>
-      </div>
-      <div class="panel reveal industry-panel" id="industries">
-        <div class="panel-head"><h2>行业分布</h2><span class="panel-tag">申万一级 · 占入金</span></div>
-        <div class="industry-bars" id="industry-bars"></div>
-        <p class="panel-foot" id="industry-foot"></p>
-      </div>
-    </div>
-  </section>
 
-  <!-- 最近交易 -->
-  <section id="recent">
-    <div class="section-head reveal">
-      <h2><span class="sec-no">01</span>最近交易</h2>
-    </div>
-    <div class="recent-strip reveal" id="recent-strip"></div>
-  </section>
+        <div class="metric-grid" id="overview-metrics"></div>
 
-  <!-- 持仓与买入理由 -->
-  <section id="holdings">
-    <div class="section-head reveal">
-      <h2><span class="sec-no">03</span>正在持有</h2>
-    </div>
-    <div class="cards" id="holding-cards"></div>
-  </section>
+        <div class="dashboard-grid">
+          <article class="paper-panel allocation-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">PORTFOLIO</p><h2>持仓构成</h2></div>
+              <span class="panel-note">按成本排序 · 展示至累计 60%</span>
+            </div>
+            <div class="capital-bar" id="capital-bar"></div>
+            <div class="allocation-body">
+              <div class="donut-block">
+                <div class="donut" id="holding-donut" role="img">
+                  <div><strong id="donut-total"></strong><span>持仓成本</span></div>
+                </div>
+                <p><span id="featured-share-label"></span> <strong id="featured-share"></strong></p>
+              </div>
+              <ol class="allocation-legend" id="allocation-legend"></ol>
+            </div>
+          </article>
 
-  <!-- 交易记录 -->
-  <section id="trades">
-    <div class="section-head reveal">
-      <h2><span class="sec-no">04</span>交易记录</h2>
-    </div>
-    <div class="journal-controls reveal">
-      <div class="journal-filters" id="trade-filters">
-        <button class="jfilter active" data-f="全部">全部</button>
-        <button class="jfilter" data-f="买入">买入</button>
-        <button class="jfilter" data-f="卖出">卖出</button>
-      </div>
-    </div>
-    <div class="panel reveal table-panel">
-      <table class="htable" id="ttable">
-        <thead>
-          <tr>
-            <th>日期</th>
-            <th>标的</th>
-            <th>方向</th>
-            <th class="num">股数</th>
-            <th class="num">价格</th>
-            <th class="num">金额</th>
-            <th class="num">费用</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
+          <article class="paper-panel return-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">PERFORMANCE</p><h2>今年收益曲线</h2></div>
+              <span class="small-sun" aria-hidden="true">✳</span>
+            </div>
+            <div class="return-summary"><div><span>按累计净投入估算</span><strong id="return-total"></strong></div><div><span>今年已到账分红</span><strong id="received-dividend"></strong></div></div>
+            <div class="return-chart-wrap"><canvas id="return-chart" role="img" aria-label="今年按累计净投入估算的持仓收益率曲线"></canvas></div>
+            <div class="return-chart-foot"><span id="return-range"></span><span>不含闲置现金</span></div>
+            <details class="method-note"><summary>计算口径</summary><p>按累计净投入估算，包含已卖出回款、费用与已到账净分红，不含闲置现金。不同于当前持仓浮动盈亏，并非券商账户收益率。部分分红以约日、除息日或确认日近似入账，曲线可能有小幅偏差。</p></details>
+          </article>
+        </div>
 
-  <footer>
-    <p>Lumos · 投资记录 — 数据来自个人 Obsidian 仓库，快照日期 <span id="foot-date"></span>。</p>
-    <p class="fine">本页为个人投资过程记录，不构成任何投资建议。</p>
-  </footer>
-</main>
+        <section class="content-section" aria-labelledby="industry-title">
+          <div class="section-heading">
+            <div><span class="section-number">01</span><h2 id="industry-title">组合结构</h2></div>
+            <p>行业分布与持仓集中度</p>
+          </div>
+          <div class="two-column-section">
+            <article class="plain-panel">
+              <div class="subheading"><h3>行业配置</h3><span>占持仓成本</span></div>
+              <div class="industry-list" id="industry-list"></div>
+            </article>
+            <article class="plain-panel concentration-panel">
+              <div class="subheading"><h3>集中度与风险敞口</h3><span>按持仓成本</span></div>
+              <div class="coordinates" id="portfolio-coordinates"></div>
+              <div class="risk-exposure-scroll" tabindex="0" role="region" aria-label="风险敞口，可上下滚动查看全部项目">
+                <div class="risk-exposure-list" id="risk-exposure-list"></div>
+              </div>
+            </article>
+          </div>
+        </section>
 
-<!-- 持仓 K 线弹窗 -->
-<div class="modal" id="modal" role="dialog" aria-modal="true" hidden>
-  <div class="modal-backdrop" id="modal-backdrop"></div>
-  <div class="modal-box">
-    <div class="modal-head">
-      <div>
-        <h3 id="modal-title"></h3>
-        <p class="modal-sub" id="modal-sub"></p>
-      </div>
-      <button class="modal-close" id="modal-close" aria-label="关闭">×</button>
-    </div>
-    <div class="modal-stats" id="modal-stats"></div>
-    <div class="chart-wrap">
-      <div class="chart-scroll" id="chart-scroll">
-        <canvas id="kline-chart"></canvas>
-      </div>
-    </div>
-    <div class="chart-legend">
-      <span><i class="lg lg-buy"></i>买入</span>
-      <span><i class="lg lg-sell"></i>卖出</span>
-      <span><i class="lg lg-cost"></i>持仓成本线</span>
-      <span class="chart-note">日 K 线（不复权，与成交价格同口径）</span>
-      <span class="chart-range" id="chart-range"></span>
-    </div>
-    <div class="modal-trades" id="modal-trades"></div>
+        <section class="content-section" aria-labelledby="recent-title">
+          <div class="section-heading">
+            <div><span class="section-number">02</span><h2 id="recent-title">最近交易</h2></div>
+            <a class="text-link" href="#trades">全部交易 <span>↗</span></a>
+          </div>
+          <div class="recent-ledger" id="recent-trades"></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-holdings" data-view="holdings" aria-labelledby="holdings-title" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">OWNED BUSINESSES</p><h1 id="holdings-title">当前持仓</h1></div>
+          <p>按公司名称、代码或行业查找。<br>点击持仓可查看买入理由与成交记录。</p>
+        </div>
+        <div class="toolbar">
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="holding-search" type="search" placeholder="搜索名称或代码" aria-label="搜索持仓"></label>
+          <label class="select-box"><span>行业</span><select id="industry-filter" aria-label="按行业筛选"><option value="all">全部行业</option></select></label>
+          <label class="select-box"><span>排序</span><select id="holding-sort" aria-label="持仓排序"><option value="cost">按持仓成本</option><option value="pnl">按浮动盈亏</option><option value="recent">按最近建仓</option></select></label>
+        </div>
+        <div class="result-line"><span id="holding-result-count"></span><span>单位：人民币</span></div>
+        <div class="holdings-table-wrap">
+          <div class="holdings-table-head" aria-hidden="true"><span>公司 / 行业</span><span>持有</span><span>成本 / 现价</span><span>持仓市值</span><span>浮动盈亏</span><span></span></div>
+          <div class="holdings-list" id="holdings-list"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-trades" data-view="trades" aria-labelledby="trades-title" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">DECISION LEDGER</p><h1 id="trades-title">交易记录</h1></div>
+          <p>共 <span id="trade-total-heading"></span> 笔成交，按日期倒序排列。<br>金额为成交额，费用单独列示。</p>
+        </div>
+        <div class="toolbar trade-toolbar">
+          <div class="segmented-control" id="trade-filters" aria-label="交易方向筛选">
+            <button class="active" data-side="全部" aria-pressed="true">全部</button>
+            <button data-side="买入" aria-pressed="false">买入</button>
+            <button data-side="卖出" aria-pressed="false">卖出</button>
+          </div>
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="trade-search" type="search" placeholder="搜索名称或代码" aria-label="搜索交易"></label>
+        </div>
+        <div class="result-line"><span id="trade-result-count"></span><span>金额为成交额，费用另列</span></div>
+        <div class="trade-ledger">
+          <div class="trade-table-head" aria-hidden="true"><span>日期</span><span>公司</span><span>方向</span><span>股数</span><span>成交价</span><span>金额 / 费用</span></div>
+          <div id="trades-list"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-watchlist" data-view="watchlist" aria-labelledby="watchlist-title" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">WAIT & WATCH</p><h1 id="watchlist-title">观察清单</h1></div>
+          <p>关注标的的收盘价、纳入原因与买入资格。<br>列入清单不代表计划买入。</p>
+        </div>
+        <div class="watchlist-grid" id="watchlist-grid"></div>
+      </section>
+
+      <section class="view" id="view-notes" data-view="notes" aria-labelledby="notes-title" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">FIELD NOTES</p><h1 id="notes-title">投资笔记</h1></div>
+          <p>公司研究、组合复盘与投资规则。</p>
+        </div>
+        <div id="notes-list"></div>
+        <article class="note-reader" id="note-reader" hidden></article>
+      </section>
+
+      <footer class="site-footer">
+        <div><span class="footer-mark">L</span><p>Lumos · 投资记录<small>数据来自个人 Obsidian 仓库</small></p></div>
+        <p>价格均为标注日期的收盘价，非实时行情。<br>个人记录，不构成投资建议。</p>
+      </footer>
+    </main>
   </div>
-</div>
 
-<script src="data.js?v=6"></script>
-<script src="app.js?v=5"></script>
+  <dialog class="holding-dialog" id="holding-dialog" aria-labelledby="dialog-title">
+    <button class="dialog-close" id="dialog-close" aria-label="关闭持仓详情">×</button>
+    <div id="dialog-content"></div>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script src="performance-data.js"></script>
+  <script src="notes-data.js?v=5"></script>
+  <script src="app.js?v=watchlist-chart"></script>
 </body>
 </html>
