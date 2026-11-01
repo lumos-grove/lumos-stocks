@@ -205,6 +205,7 @@ function openModal(h) {
     drawChart(h);
     const scroll = document.getElementById("chart-scroll");
     scroll.scrollLeft = scroll.scrollWidth;
+    drawChart(h);
   });
 }
 
@@ -217,7 +218,7 @@ function drawChart(h) {
   const canvas = document.getElementById("kline-chart");
   const wrap = canvas.parentElement;
   const bars = h.klines;
-  const W = Math.max(wrap.clientWidth, bars.length * 5.5 + 66);
+  const W = Math.max(wrap.clientWidth, bars.length * 3.2 + 66);
   const H = Math.min(360, Math.max(240, Math.round(W * 0.42)));
   const dpr = window.devicePixelRatio || 1;
   canvas.width = W * dpr;
@@ -238,7 +239,7 @@ function drawChart(h) {
   };
 
   document.getElementById("chart-range").textContent =
-    `${h.klineStart} 起 · 可横向滚动`;
+    `${h.klineStart} — ${h.klineDate} · 可横向滚动`;
   if (!bars.length) {
     ctx.fillStyle = C.faint;
     ctx.font = "13px sans-serif";
@@ -276,15 +277,25 @@ function drawChart(h) {
     ctx.stroke();
     ctx.fillText(fmt(p, 2), W - padR + 6, yy + 3);
   }
-  // 月份刻度
-  let lastMonth = "";
-  ctx.textAlign = "center";
+  // Only draw complete month labels inside the visible part of the chart.
+  const months = [];
   bars.forEach((b, i) => {
-    const m = b.d.slice(0, 7);
-    if (m !== lastMonth) {
-      lastMonth = m;
-      ctx.fillText(m, x(i), H - 8);
-    }
+    const month = b.d.slice(0, 7);
+    if (months.at(-1)?.label === month) months.at(-1).end = i;
+    else months.push({ label: month, start: i, end: i });
+  });
+  ctx.textAlign = "center";
+  const visibleLeft = wrap.scrollLeft + 8;
+  const visibleRight = wrap.scrollLeft + wrap.clientWidth - 8;
+  let lastLabelRight = visibleLeft - 12;
+  months.forEach((month) => {
+    const center = (x(month.start) + x(month.end)) / 2;
+    const halfWidth = ctx.measureText(month.label).width / 2;
+    if (center - halfWidth < Math.max(padL, visibleLeft)) return;
+    if (center + halfWidth > Math.min(W - padR, visibleRight)) return;
+    if (center - halfWidth < lastLabelRight + 12) return;
+    ctx.fillText(month.label, center, H - 8);
+    lastLabelRight = center + halfWidth;
   });
   ctx.textAlign = "left";
 
@@ -376,6 +387,14 @@ function drawChart(h) {
 
 function setupChartScroll() {
   const scroll = document.getElementById("chart-scroll");
+  let labelFrame = 0;
+  scroll.addEventListener("scroll", () => {
+    if (labelFrame) return;
+    labelFrame = requestAnimationFrame(() => {
+      labelFrame = 0;
+      if (!document.getElementById("modal").hidden && chart.holding) drawChart(chart.holding);
+    });
+  });
   window.addEventListener("resize", () => {
     if (!document.getElementById("modal").hidden && chart.holding) {
       const atEnd = scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 2;

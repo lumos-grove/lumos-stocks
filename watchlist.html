@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
 <header class="topbar">
@@ -28,6 +28,17 @@
   </section>
   <footer><p>Lumos · 候选标的 — 价格为行情库最近一个交易日的收盘价，不是实时行情。</p><p class="fine" id="watchlist-foot"></p></footer>
 </main>
-<script src="data.js?v=4"></script><script src="watchlist.js?v=4"></script>
+<div class="modal" id="watch-chart-modal" role="dialog" aria-modal="true" aria-labelledby="watch-chart-title" hidden>
+  <div class="modal-backdrop" data-close-chart></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div><h3 id="watch-chart-title"></h3><p class="modal-sub" id="watch-chart-sub"></p></div>
+      <button class="modal-close" type="button" data-close-chart aria-label="关闭">×</button>
+    </div>
+    <div class="chart-wrap"><div class="chart-scroll" id="watch-chart-scroll"><canvas id="watch-chart"></canvas></div></div>
+    <div class="chart-legend"><span>日 K 线（不复权）</span><span class="chart-range" id="watch-chart-range"></span></div>
+  </div>
+</div>
+<script src="data.js?v=6"></script><script src="watchlist.js?v=5"></script>
 </body>
 </html>
