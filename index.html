@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#173a32">
   <title>Lumos · 投资记录</title>
   <meta name="description" content="Lumos 投资记录：组合、持仓、交易、自选与笔记。">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=calendar-wide-cells">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -49,7 +49,7 @@
         <span></span><span></span>
       </button>
       <div class="breadcrumb"><span>Lumos</span><i>/</i><strong id="current-section">投资总览</strong></div>
-      <div class="snapshot"><span class="snapshot-dot"></span>收盘快照 <time id="data-date"></time></div>
+      <div class="snapshot"><span class="snapshot-dot"></span>收盘快照 <time id="data-date"></time><span id="ledger-date" hidden></span></div>
     </header>
 
     <main id="main-content" tabindex="-1">
@@ -66,19 +66,34 @@
           </div>
         </div>
 
-        <div class="metric-grid" id="overview-metrics"></div>
+        <div class="overview-summary-grid">
+          <div class="metric-grid" id="overview-metrics"></div>
+
+          <article class="paper-panel pnl-calendar-panel" aria-label="盈亏日历">
+            <div class="pnl-calendar-heading">
+              <div class="pnl-calendar-nav" role="group" aria-label="切换月份">
+                <button type="button" id="pnl-calendar-prev" aria-label="上个月" aria-controls="pnl-calendar">‹</button>
+                <span id="pnl-calendar-month" aria-live="polite" aria-atomic="true"></span>
+                <button type="button" id="pnl-calendar-next" aria-label="下个月" aria-controls="pnl-calendar">›</button>
+              </div>
+              <div class="pnl-calendar-total" aria-live="polite" aria-atomic="true"><span>月累计</span><strong id="pnl-calendar-total"></strong></div>
+            </div>
+            <div id="pnl-calendar"></div>
+            <p class="pnl-calendar-foot" id="pnl-calendar-foot"></p>
+          </article>
+        </div>
 
         <div class="dashboard-grid">
           <article class="paper-panel allocation-panel">
             <div class="panel-heading">
               <div><p class="eyebrow">PORTFOLIO</p><h2>持仓构成</h2></div>
-              <span class="panel-note">按成本排序 · 展示至累计 60%</span>
+              <span class="panel-note" id="allocation-note"></span>
             </div>
             <div class="capital-bar" id="capital-bar"></div>
             <div class="allocation-body">
               <div class="donut-block">
                 <div class="donut" id="holding-donut" role="img">
-                  <div><strong id="donut-total"></strong><span>持仓成本</span></div>
+                  <div><strong id="donut-total"></strong><span>持仓市值</span></div>
                 </div>
                 <p><span id="featured-share-label"></span> <strong id="featured-share"></strong></p>
               </div>
@@ -91,10 +106,10 @@
               <div><p class="eyebrow">PERFORMANCE</p><h2>今年收益曲线</h2></div>
               <span class="small-sun" aria-hidden="true">✳</span>
             </div>
-            <div class="return-summary"><div><span>按累计净投入估算</span><strong id="return-total"></strong></div><div><span>今年已到账分红</span><strong id="received-dividend"></strong></div></div>
+            <div class="return-summary"><div><span>按累计净投入估算</span><strong id="return-total"></strong></div></div>
             <div class="return-chart-wrap"><canvas id="return-chart" role="img" aria-label="今年按累计净投入估算的持仓收益率曲线"></canvas></div>
             <div class="return-chart-foot"><span id="return-range"></span><span>不含闲置现金</span></div>
-            <details class="method-note"><summary>计算口径</summary><p>按累计净投入估算，包含已卖出回款、费用与已到账净分红，不含闲置现金。不同于当前持仓浮动盈亏，并非券商账户收益率。部分分红以约日、除息日或确认日近似入账，曲线可能有小幅偏差。</p></details>
+            <p class="method-note">估算，不代表真实数值。</p>
           </article>
         </div>
 
@@ -105,11 +120,11 @@
           </div>
           <div class="two-column-section">
             <article class="plain-panel">
-              <div class="subheading"><h3>行业配置</h3><span>占持仓成本</span></div>
+              <div class="subheading"><h3>行业配置</h3><span>占持仓市值</span></div>
               <div class="industry-list" id="industry-list"></div>
             </article>
             <article class="plain-panel concentration-panel">
-              <div class="subheading"><h3>集中度与风险敞口</h3><span>按持仓成本</span></div>
+              <div class="subheading"><h3>集中度与风险敞口</h3><span>按持仓市值</span></div>
               <div class="coordinates" id="portfolio-coordinates"></div>
               <div class="risk-exposure-scroll" tabindex="0" role="region" aria-label="风险敞口，可上下滚动查看全部项目">
                 <div class="risk-exposure-list" id="risk-exposure-list"></div>
@@ -155,11 +170,11 @@
             <button data-side="买入" aria-pressed="false">买入</button>
             <button data-side="卖出" aria-pressed="false">卖出</button>
           </div>
-          <label class="search-box"><span aria-hidden="true">⌕</span><input id="trade-search" type="search" placeholder="搜索名称或代码" aria-label="搜索交易"></label>
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="trade-search" type="search" placeholder="搜索名称、代码或原因" aria-label="搜索交易"></label>
         </div>
         <div class="result-line"><span id="trade-result-count"></span><span>金额为成交额，费用另列</span></div>
         <div class="trade-ledger">
-          <div class="trade-table-head" aria-hidden="true"><span>日期</span><span>公司</span><span>方向</span><span>股数</span><span>成交价</span><span>金额 / 费用</span></div>
+          <div class="trade-table-head" aria-hidden="true"><span>日期</span><span>公司</span><span>方向</span><span>股数</span><span>成交价</span><span>金额 / 费用</span><span>交易原因</span></div>
           <div id="trades-list"></div>
         </div>
       </section>
@@ -194,8 +209,8 @@
   </dialog>
 
   <script src="data.js"></script>
-  <script src="performance-data.js"></script>
+  <script src="performance-data.js?v=chip-pnl-calendar"></script>
   <script src="notes-data.js?v=5"></script>
-  <script src="app.js?v=watchlist-chart"></script>
+  <script src="app.js?v=weekday-calendar"></script>
 </body>
 </html>

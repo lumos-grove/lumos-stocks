@@ -2,6 +2,7 @@ const data = window.LUMOS_DATA;
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const money = (value, digits = 2) => `¥${Number(value).toLocaleString("zh-CN", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+const signedMoney = (value) => `${value >= 0 ? "+" : "−"}${money(Math.abs(value))}`;
 const number = (value, digits = 2) => Number(value).toLocaleString("zh-CN", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const signed = (value, digits = 2) => `${value >= 0 ? "+" : ""}${number(value, digits)}`;
 const pnlClass = (value) => value >= 0 ? "positive" : "negative";
@@ -9,7 +10,7 @@ const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&":
 const emptyState = (title, copy) => `<div class="empty-state"><strong>${title}</strong><p>${copy}</p></div>`;
 const routes = ["overview", "holdings", "trades", "watchlist", "notes"];
 const routeNames = { overview: "投资总览", holdings: "我的持仓", trades: "交易记录", watchlist: "观察清单", notes: "投资笔记" };
-const colors = ["#244b40", "#c75932", "#5b7e68", "#d58a5f", "#87a28b", "#b9754d", "#d7d5c8"];
+const colors = ["#244b40", "#c75932", "#5b7e68", "#d58a5f", "#87a28b", "#b9754d", "#6d9278", "#db9b73"];
 const riskGroups = [
   { name: "居民消费", industries: ["食品饮料", "家用电器"] },
   { name: "利率与信用", industries: ["银行"] },
@@ -20,7 +21,7 @@ const riskGroups = [
   { name: "医药医疗", industries: ["医药生物"] },
   { name: "商品价格", industries: ["石油石化", "有色金属"] },
 ];
-const state = { side: "全部" };
+const state = { side: "全部", calendarMonth: null };
 const chartState = { holding: null, frame: 0, drag: null };
 const principles = [
   "股票就是公司的所有权",
@@ -63,6 +64,9 @@ function setupPrinciples() {
 function renderHeader() {
   $("#data-date").textContent = data.dataDate;
   $("#data-date").dateTime = data.dataDate;
+  const ledgerDate = $("#ledger-date");
+  ledgerDate.hidden = !data.ledgerDate || data.ledgerDate <= data.dataDate;
+  if (!ledgerDate.hidden) ledgerDate.textContent = ` · 交易至 ${data.ledgerDate}`;
   $("#first-trade-date").textContent = data.firstTradeDate;
   $("#nav-holding-count").textContent = data.stats.holdingCount;
   $("#nav-trade-count").textContent = data.trades.length;
@@ -73,22 +77,32 @@ function renderHeader() {
 
 function renderOverview() {
   const s = data.stats;
+  const performance = window.LUMOS_PERFORMANCE;
   const cash = s.capital - s.costTotal;
   const cashPct = cash / s.capital * 100;
-  const investedPct = s.costTotal / s.capital * 100;
-  const topFive = data.composition.slice(0, 5).reduce((sum, item) => sum + item.cost, 0);
+  const marketComposition = data.holdings.map((holding) => ({
+    name: holding.name,
+    industry: holding.industry,
+    value: holding.shares * holding.closePrice,
+  })).sort((a, b) => b.value - a.value);
+  const topFiveValue = marketComposition.slice(0, 5).reduce((sum, item) => sum + item.value, 0);
+  const marketByIndustry = new Map();
+  for (const item of marketComposition) {
+    marketByIndustry.set(item.industry, (marketByIndustry.get(item.industry) || 0) + item.value);
+  }
+  const marketIndustries = [...marketByIndustry].map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+  const closeDates = [...new Set(data.holdings.map((holding) => holding.closeDate))].sort();
   const featured = [];
-  let featuredCost = 0;
-  for (const item of data.composition) {
+  let featuredValue = 0;
+  for (const item of marketComposition) {
     featured.push(item);
-    featuredCost += item.cost;
-    if (featuredCost / s.costTotal * 100 >= 60) break;
+    featuredValue += item.value;
+    if (featuredValue / s.marketTotal * 100 >= 60) break;
   }
   const metrics = [
     { label: "持仓市值", code: "MARKET VALUE", value: money(s.marketTotal), foot: `成本 ${money(s.costTotal)}` },
     { label: "浮动盈亏", code: "UNREALIZED P/L", value: signed(s.pnl), foot: `${signed(s.pnlPct)}% · 按摊薄成本`, cls: pnlClass(s.pnl) },
-    { label: "今年总分红", code: "DIVIDENDS RECEIVED", value: money(s.dividendTotal), foot: "2026 年已到账 · 扣除已确认税款" },
-    { label: "可用资金", code: "AVAILABLE CASH", value: money(cash), foot: `占入金 ${number(cashPct)}% · 入金减成本倒推` },
   ];
   $("#overview-metrics").innerHTML = metrics.map((item) => `
     <article class="metric">
@@ -96,46 +110,50 @@ function renderOverview() {
       <div class="metric-value ${item.cls || ""}">${item.value}</div>
       <div class="metric-foot">${item.foot}</div>
     </article>`).join("");
+  renderPnlCalendar(performance, data.dataDate);
 
-  $("#capital-bar").innerHTML = `<span class="invested" style="width:${investedPct}%" title="持仓成本 ${number(investedPct)}%"></span><span class="cash" style="width:${cashPct}%" title="可用资金 ${number(cashPct)}%"></span>`;
-  $("#capital-bar").setAttribute("aria-label", `持仓成本占入金 ${number(investedPct)}%，可用资金占 ${number(cashPct)}%`);
-  $("#donut-total").textContent = money(s.costTotal, 0);
+  const featuredPct = featuredValue / s.marketTotal * 100;
+  const closeDateLabel = closeDates.length === 1 ? `${closeDates[0]} 收盘` : `${closeDates[0]}—${closeDates.at(-1)} 收盘`;
+  $("#allocation-note").textContent = `按市值排序 · ${closeDateLabel} · 累计至 60%`;
+  $("#capital-bar").innerHTML = `<span class="invested" style="width:${featuredPct}%" title="主要持仓市值 ${number(featuredPct)}%"></span><span class="cash" style="width:${100 - featuredPct}%" title="其他持仓市值 ${number(100 - featuredPct)}%"></span>`;
+  $("#capital-bar").setAttribute("aria-label", `主要持仓市值占 ${number(featuredPct)}%，其他持仓占 ${number(100 - featuredPct)}%`);
+  $("#donut-total").textContent = money(s.marketTotal, 0);
   $("#featured-share-label").textContent = `前${featured.length}大持仓`;
-  $("#featured-share").textContent = `${number(featuredCost / s.costTotal * 100)}%`;
-  const otherCount = data.composition.length - featured.length;
-  const slices = [...featured, { name: `其他 ${otherCount} 只`, cost: s.costTotal - featuredCost }];
-  $("#holding-donut").setAttribute("aria-label", `累计覆盖约 60% 持仓成本的前 ${featured.length} 只持仓，以及其他 ${otherCount} 只持仓`);
+  $("#featured-share").textContent = `${number(featuredPct)}%`;
+  const otherCount = marketComposition.length - featured.length;
+  const slices = [...featured, { name: `其他 ${otherCount} 只`, value: s.marketTotal - featuredValue }];
+  const sliceColors = slices.map((_, index) => index === slices.length - 1 ? "#d7d5c8" : colors[index % colors.length]);
+  $("#holding-donut").setAttribute("aria-label", `${closeDateLabel}市值，累计覆盖约 60% 的前 ${featured.length} 只持仓，以及其他 ${otherCount} 只持仓`);
   let cursor = 0;
   const stops = slices.map((item, index) => {
     const start = cursor;
-    cursor += item.cost / s.costTotal * 100;
-    return `${colors[index]} ${start}% ${cursor}%`;
+    cursor += item.value / s.marketTotal * 100;
+    return `${sliceColors[index]} ${start}% ${cursor}%`;
   });
   $("#holding-donut").style.background = `conic-gradient(${stops.join(",")})`;
   $("#allocation-legend").innerHTML = slices.map((item, index) => `
-    <li><i style="background:${colors[index]}"></i><span>${esc(item.name)}</span><strong>${number(item.cost / s.costTotal * 100)}%</strong><small>${money(item.cost, 0)}</small></li>`).join("");
+    <li><i style="background:${sliceColors[index]}"></i><span>${esc(item.name)}</span><strong>${number(item.value / s.marketTotal * 100)}%</strong><small>${money(item.value, 0)}</small></li>`).join("");
 
-  $("#received-dividend").textContent = money(s.dividendTotal);
-  if (window.LUMOS_PERFORMANCE) {
-    const performance = window.LUMOS_PERFORMANCE;
+  if (performance) {
     $("#return-total").textContent = `${signed(performance.totalReturn)}%`;
     $("#return-range").textContent = `${performance.start} — ${performance.end}`;
     requestAnimationFrame(drawReturnChart);
   }
 
-  $("#industry-list").innerHTML = data.industries.slice(0, 8).map((item) => {
-    const weight = item.cost / s.costTotal * 100;
-    return `<div class="industry-row"><span>${esc(item.name)}</span><div class="industry-track"><span style="width:${Math.min(weight / 25 * 100, 100)}%"></span></div><strong>${number(weight)}%</strong></div>`;
+  $("#industry-list").innerHTML = marketIndustries.slice(0, 8).map((item) => {
+    const weight = item.value / s.marketTotal * 100;
+    return `<div class="industry-row"><span>${esc(item.name)}</span><div class="industry-track"><span style="width:${Math.min(weight / 30 * 100, 100)}%"></span></div><strong>${number(weight)}%</strong></div>`;
   }).join("");
+  const estimatedPositionPct = s.marketTotal / (s.marketTotal + cash) * 100;
   const coordinates = [
-    [`${number(topFive / s.costTotal * 100)}%`, "前五大持仓占比"],
-    [`${number(investedPct)}%`, "持仓仓位"],
-    [s.holdingCount, "当前持仓公司"],
+    [`${number(topFiveValue / s.marketTotal * 100)}%`, "前五大占比"],
+    [`${number(estimatedPositionPct)}%`, "估算仓位"],
+    [s.holdingCount, "持仓数"],
   ];
   $("#portfolio-coordinates").innerHTML = coordinates.map(([value, label]) => `<div class="coordinate"><strong>${value}</strong><span>${label}</span></div>`).join("");
   $("#risk-exposure-list").innerHTML = riskGroups.map((group) => {
-    const cost = data.industries.filter((industry) => group.industries.includes(industry.name)).reduce((sum, industry) => sum + industry.cost, 0);
-    const weight = cost / s.costTotal * 100;
+    const value = group.industries.reduce((sum, industry) => sum + (marketByIndustry.get(industry) || 0), 0);
+    const weight = value / s.marketTotal * 100;
     return `<div class="risk-row"><span>${group.name}</span><div class="risk-track"><i style="width:${weight / 35 * 100}%"></i></div><strong>${number(weight)}%</strong></div>`;
   }).join("");
   requestAnimationFrame(alignStructurePanels);
@@ -146,6 +164,57 @@ function renderOverview() {
       <div class="recent-side ${trade.side === "买入" ? "positive" : "negative"}">${trade.side}<small>${trade.shares} 股 @ ${number(trade.price)}</small></div>
       <div class="recent-reason">${esc(trade.reason || "未记录交易理由")}</div>
     </article>`).join("");
+}
+
+function renderPnlCalendar(performance, snapshotDate) {
+  const root = $("#pnl-calendar");
+  const entries = performance?.dailyPnlSeries || [];
+  const latestMonth = snapshotDate.slice(0, 7);
+  const earliestMonth = entries.length ? entries[0].date.slice(0, 7) : latestMonth;
+  const month = state.calendarMonth || latestMonth;
+  state.calendarMonth = month < earliestMonth ? earliestMonth : month > latestMonth ? latestMonth : month;
+  if (state.calendarMonth !== month) return renderPnlCalendar(performance, snapshotDate);
+  const byDate = new Map(entries.filter((entry) => entry.date.startsWith(month))
+    .map((entry) => [entry.date, entry.amount]));
+  const monthlyTotal = [...byDate.values()].reduce((sum, amount) => sum + amount, 0);
+  const [year, monthNumber] = month.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const firstDay = new Date(Date.UTC(year, monthNumber - 1, 1));
+  const firstWeekday = (firstDay.getUTCDay() + 6) % 7;
+  const mondayOffset = firstWeekday < 5 ? firstWeekday : 0;
+  $("#pnl-calendar-month").textContent = `${year} 年 ${monthNumber} 月`;
+  $("#pnl-calendar-prev").disabled = month <= earliestMonth;
+  $("#pnl-calendar-next").disabled = month >= latestMonth;
+  const total = $("#pnl-calendar-total");
+  total.textContent = byDate.size ? signedMoney(monthlyTotal) : "—";
+  total.className = byDate.size ? pnlClass(monthlyTotal) : "";
+  $("#pnl-calendar-foot").textContent = `${byDate.size} 天盈亏记录 · 按收盘持仓及当日现金流估算 · 无记录日期留空`;
+
+  const cells = Array.from({ length: mondayOffset }, () => '<div class="calendar-empty" aria-hidden="true"></div>');
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const weekday = new Date(Date.UTC(year, monthNumber - 1, day)).getUTCDay();
+    if (weekday === 0 || weekday === 6) continue;
+    const date = `${month}-${String(day).padStart(2, "0")}`;
+    const isFuture = date > snapshotDate;
+    const isLatest = date === snapshotDate;
+    const amount = byDate.get(date);
+    const amountLabel = amount === undefined ? "" : `<span class="${pnlClass(amount)}">${signedMoney(amount)}</span>`;
+    const accessibleLabel = `${date}${isLatest ? "，最新收盘" : ""}${amount === undefined ? "" : `，盈亏 ${signedMoney(amount)}`}`;
+    cells.push(`<div role="gridcell" class="${isFuture ? "calendar-future" : ""}${isLatest ? " calendar-latest" : ""}" aria-label="${accessibleLabel}"><time datetime="${date}">${day}</time>${amountLabel}</div>`);
+  }
+  while (cells.length % 5) cells.push('<div class="calendar-empty" aria-hidden="true"></div>');
+  root.classList.add("pnl-calendar");
+  root.setAttribute("role", "grid");
+  root.setAttribute("aria-label", `${year} 年 ${monthNumber} 月盈亏日历，周一至周五`);
+  const weekdays = ["一", "二", "三", "四", "五"]
+    .map((day) => `<div class="calendar-weekday" role="columnheader">${day}</div>`);
+  root.innerHTML = weekdays.join("") + cells.join("");
+}
+
+function shiftPnlCalendar(offset) {
+  const [year, month] = state.calendarMonth.split("-").map(Number);
+  state.calendarMonth = new Date(Date.UTC(year, month - 1 + offset, 1)).toISOString().slice(0, 7);
+  renderPnlCalendar(window.LUMOS_PERFORMANCE, data.dataDate);
 }
 
 function drawReturnChart() {
@@ -205,6 +274,7 @@ function drawReturnChart() {
   ctx.beginPath();
   ctx.arc(x(series.length - 1), y(series.at(-1).r), 3.5, 0, Math.PI * 2);
   ctx.fill();
+  ctx.font = "10px Menlo, monospace";
   ctx.fillStyle = "#9fb3a5";
   const tickCount = width < 360 ? 3 : 5;
   for (let index = 0; index < tickCount; index++) {
@@ -281,7 +351,7 @@ function openHolding(code) {
       <h3>买入理由</h3><p class="dialog-reason">${esc(holding.reason || "未记录买入理由")}</p>
       <p class="dialog-profile">${esc(holding.profile || "尚未记录公司概况")}</p>
       ${priceChart(holding)}
-      <h3>相关成交</h3><div class="dialog-trades">${holding.trades.map((trade) => `<div class="dialog-trade"><time>${trade.date}</time><span class="${trade.side === "买入" ? "positive" : "negative"}">${trade.side}</span><span>${trade.shares} 股 @ ${number(trade.price)}</span></div>`).join("")}</div>
+      <h3>相关成交</h3><div class="dialog-trades">${holding.trades.slice().sort((a, b) => b.date.localeCompare(a.date)).map((trade) => `<div class="dialog-trade"><time>${trade.date}</time><span class="${trade.side === "买入" ? "positive" : "negative"}">${trade.side}</span><span>${trade.shares} 股 @ ${number(trade.price)}</span></div>`).join("")}</div>
       <p class="dialog-disclaimer">摊薄成本已受历史买卖与分红影响，浮动盈亏不代表持有至今的总收益。</p>
     </div>`;
   chartState.holding = holding;
@@ -482,7 +552,7 @@ function setupChartInteractions() {
 
 function renderTrades() {
   const query = $("#trade-search").value.trim().toLowerCase();
-  const trades = data.trades.filter((trade) => (state.side === "全部" || trade.side === state.side) && (!query || `${trade.name}${trade.code}`.toLowerCase().includes(query)));
+  const trades = data.trades.filter((trade) => (state.side === "全部" || trade.side === state.side) && (!query || `${trade.name}${trade.code}${trade.reason || ""}`.toLowerCase().includes(query)));
   $("#trade-result-count").textContent = `显示 ${trades.length} / ${data.trades.length} 笔交易`;
   $("#trades-list").innerHTML = trades.length ? trades.map((trade) => `
     <article class="trade-row">
@@ -492,6 +562,7 @@ function renderTrades() {
       <span class="number">${trade.shares} 股</span>
       <span class="number">${number(trade.price)}</span>
       <div><span class="number">${money(trade.amount)}</span><div class="fee">费用 ${money(trade.fee)}</div></div>
+      <div class="trade-reason${trade.reason ? "" : " is-empty"}"><span class="trade-reason-label">原因</span>${trade.reason ? esc(trade.reason) : "—"}</div>
     </article>`).join("") : emptyState("没有匹配的交易", "请调整交易方向或搜索条件。");
 }
 
@@ -606,6 +677,8 @@ function closeSidebar() {
 
 function setupEvents() {
   window.addEventListener("hashchange", setRoute);
+  $("#pnl-calendar-prev").addEventListener("click", () => shiftPnlCalendar(-1));
+  $("#pnl-calendar-next").addEventListener("click", () => shiftPnlCalendar(1));
   window.addEventListener("resize", alignStructurePanels);
   $("#menu-button").addEventListener("click", () => {
     const open = document.body.classList.toggle("sidebar-open");
