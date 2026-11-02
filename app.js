@@ -137,7 +137,6 @@ function renderOverview() {
   if (performance) {
     $("#return-total").textContent = `${signed(performance.totalReturn)}%`;
     $("#return-range").textContent = `${performance.start} — ${performance.end}`;
-    requestAnimationFrame(drawReturnChart);
   }
 
   $("#industry-list").innerHTML = marketIndustries.slice(0, 8).map((item) => {
@@ -156,7 +155,6 @@ function renderOverview() {
     const weight = value / s.marketTotal * 100;
     return `<div class="risk-row"><span>${group.name}</span><div class="risk-track"><i style="width:${weight / 35 * 100}%"></i></div><strong>${number(weight)}%</strong></div>`;
   }).join("");
-  requestAnimationFrame(alignStructurePanels);
   $("#recent-trades").innerHTML = data.recent.map((trade) => `
     <article class="recent-item">
       <time class="recent-date" datetime="${trade.date}">${trade.date}</time>
@@ -668,6 +666,13 @@ function setRoute() {
   }
   closeSidebar();
   window.scrollTo({ top: 0, behavior: "instant" });
+  if (selected === "overview") {
+    requestAnimationFrame(() => {
+      if ($("#view-overview").hidden) return;
+      drawReturnChart();
+      alignStructurePanels();
+    });
+  }
 }
 
 function closeSidebar() {
