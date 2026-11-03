@@ -102,13 +102,20 @@ function renderOverview() {
   }
   const metrics = [
     { label: "持仓市值", code: "MARKET VALUE", value: money(s.marketTotal), foot: `成本 ${money(s.costTotal)}` },
-    { label: "浮动盈亏", code: "UNREALIZED P/L", value: signed(s.pnl), foot: `${signed(s.pnlPct)}% · 按摊薄成本`, cls: pnlClass(s.pnl) },
+    {
+      label: "浮动盈亏", code: "UNREALIZED P/L", value: signed(s.pnl),
+      foot: `${signed(s.pnlPct)}% · 按摊薄成本`, cls: pnlClass(s.pnl),
+      total: Number.isFinite(s.totalPnl) ? signedMoney(s.totalPnl) : "待补全",
+      totalClass: Number.isFinite(s.totalPnl) ? pnlClass(s.totalPnl) : "",
+    },
   ];
   $("#overview-metrics").innerHTML = metrics.map((item) => `
     <article class="metric">
       <div class="metric-label">${item.label}<span>${item.code}</span></div>
       <div class="metric-value ${item.cls || ""}">${item.value}</div>
-      <div class="metric-foot">${item.foot}</div>
+      ${item.total
+        ? `<div class="metric-foot-row"><span class="metric-foot">${item.foot}</span><span class="metric-total" title="历史清仓记录补全后计算">总盈亏 <strong class="${item.totalClass}">${item.total}</strong></span></div>`
+        : `<div class="metric-foot">${item.foot}</div>`}
     </article>`).join("");
   renderPnlCalendar(performance, data.dataDate);
 

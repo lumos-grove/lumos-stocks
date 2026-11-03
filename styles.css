@@ -171,13 +171,17 @@ main {
 
 .overview-summary-grid { display: grid; grid-template-columns: minmax(270px, .85fr) minmax(0, 1.65fr); gap: 24px; margin-bottom: 20px; }
 .metric-grid { display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
-.metric { position: relative; display: flex; flex-direction: column; justify-content: center; padding: 20px 0; }
+.metric { position: relative; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; padding: 16px 0; }
 .metric + .metric { border-top: 1px solid var(--line); }
 .metric-label { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; letter-spacing: .5px; }
 .metric-label span { color: #858b80; font: 10px var(--mono); }
 .metric-value { margin-top: 7px; font: 500 clamp(25px, 2.2vw, 31px)/1.35 var(--numeric); letter-spacing: -.035em; }
 .metric-value small { margin-left: 3px; font-size: 13px; letter-spacing: 0; }
 .metric-foot { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.metric-foot-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 4px; white-space: nowrap; }
+.metric-foot-row .metric-foot { margin-top: 0; }
+.metric-total { color: var(--muted); font-size: 12px; }
+.metric-total strong { font-weight: 500; }
 .positive { color: var(--orange) !important; }
 .negative { color: var(--green) !important; }
 
@@ -486,7 +490,8 @@ main {
 
 @media (max-width: 860px) {
   .overview-summary-grid { grid-template-columns: 1fr; gap: 18px; }
-  .metric-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
+  .metric:first-child { padding-right: 24px; }
   .metric + .metric { padding-left: 24px; }
   .metric + .metric { border-top: 0; }
   .metric + .metric::before { content: ""; position: absolute; top: 20px; bottom: 20px; left: 0; width: 1px; background: var(--line); }
@@ -527,13 +532,16 @@ main {
   .hero-stamp span { font-size: 7px; letter-spacing: 2px; }
   .hero-stamp strong { font-size: 29px; }
   .hero-stamp small { display: none; }
+  .metric-grid { grid-template-columns: 1fr; grid-template-rows: repeat(2, auto); }
   .metric { padding: 16px 12px; }
-  .metric:first-child { padding-left: 0; }
-  .metric + .metric { padding-left: 12px; }
+  .metric:first-child { padding-right: 0; padding-left: 0; }
+  .metric + .metric { padding-left: 0; border-top: 1px solid var(--line); }
+  .metric + .metric::before { display: none; }
   .metric-label { font-size: 11px; }
   .metric-label span { display: none; }
   .metric-value { font-size: 22px; }
   .metric-foot { font-size: 11px; }
+  .metric-total { font-size: 11px; }
   .paper-panel.pnl-calendar-panel { padding: 10px; }
   .pnl-calendar-heading { margin: 0 0 6px; }
   .pnl-calendar-nav { gap: 0; font-size: 10px; }
