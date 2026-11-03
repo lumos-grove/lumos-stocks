@@ -155,7 +155,7 @@ function renderOverview() {
     const weight = value / s.marketTotal * 100;
     return `<div class="risk-row"><span>${group.name}</span><div class="risk-track"><i style="width:${weight / 35 * 100}%"></i></div><strong>${number(weight)}%</strong></div>`;
   }).join("");
-  $("#recent-trades").innerHTML = data.recent.map((trade) => `
+  $("#recent-trades").innerHTML = data.recent.slice(0, 5).map((trade) => `
     <article class="recent-item">
       <time class="recent-date" datetime="${trade.date}">${trade.date}</time>
       <div class="recent-company"><strong>${esc(trade.name)}</strong><small>${trade.code}</small></div>
@@ -617,7 +617,7 @@ function renderNotes() {
     <button class="note-card" type="button" data-note="${esc(post.id)}">
       <span class="note-card-meta"><span>${esc(post.category)}</span><time datetime="${esc(post.date)}">${esc(post.date)}</time></span>
       <h2>${esc(post.title)}</h2>
-      <p class="note-card-subtitle">${esc(post.subtitle)}</p>
+      <p class="note-card-subtitle">${esc(post.subtitle || post.excerpt)}</p>
       <span class="note-read">阅读全文 <span aria-hidden="true">↗</span></span>
     </button>`).join("") : emptyState("暂无投资笔记", "当前页面数据中还没有已发布的笔记。");
   $$("[data-note]").forEach((button) => button.addEventListener("click", () => {
@@ -636,7 +636,7 @@ function showNote(id) {
     <header class="note-reader-head">
       <p class="eyebrow">${esc(post.category)} · ${esc(post.date)}</p>
       <h2>${esc(post.title)}</h2>
-      <p class="note-reader-subtitle">${esc(post.subtitle)}</p>
+      ${post.subtitle ? `<p class="note-reader-subtitle">${esc(post.subtitle)}</p>` : ""}
     </header>
     ${post.attachment ? `<aside class="note-attachment"><div><span class="eyebrow">RESEARCH TOOL</span><strong>${esc(post.attachment.title)}</strong><p>${esc(post.attachment.description)}</p></div><a href="${esc(post.attachment.href)}" download="${esc(post.attachment.filename)}">下载 Markdown <span aria-hidden="true">↓</span></a></aside>` : ""}
     <div class="note-reader-body">${post.body}</div>`;
