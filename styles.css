@@ -319,6 +319,10 @@ main {
 .select-box > span { color: var(--muted); font-size: 12px; }
 .select-box select { height: 37px; padding: 0 20px 0 0; color: var(--ink); background: transparent; border: 0; outline: none; font-size: 13px; }
 .result-line { display: flex; justify-content: space-between; margin: 16px 0 12px; color: var(--muted); font-size: 11px; }
+.holding-group + .holding-group { margin-top: 42px; }
+.holding-group-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
+.holding-group-heading h2 { margin: 0; font: 600 25px var(--serif); }
+.holding-group-heading span { color: var(--muted); font: 12px var(--mono); }
 
 .holdings-table-head, .holding-row { display: grid; grid-template-columns: minmax(170px, 1.45fr) .6fr 1fr .9fr 1fr 22px; align-items: center; gap: 16px; }
 .holdings-table-head { padding: 0 18px 10px; color: var(--muted); font-size: 11px; }
@@ -382,6 +386,10 @@ main {
 .cashflow-card-stage { align-self: flex-start; margin: 12px 0 0; padding: 3px 8px; color: var(--forest); background: #e2e6d9; font-size: 11px; }
 .cashflow-card-dates { display: flex; flex-wrap: wrap; gap: 3px 13px; margin-top: auto; padding-top: 16px; color: var(--muted); font-size: 11px; }
 .cashflow-announced-card > a { align-self: flex-start; margin-top: 10px; color: var(--forest-light); font-size: 11px; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.cashflow-annual-groups { display: grid; gap: 24px; }
+.cashflow-annual-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 7px; }
+.cashflow-annual-group-head h3 { margin: 0; font: 600 17px var(--serif); }
+.cashflow-annual-group-head span { color: var(--muted); font: 11px var(--mono); text-align: right; }
 .cashflow-annual-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; }
 .cashflow-annual-row { display: grid; grid-template-columns: minmax(135px, 1.1fr) minmax(50px, 1fr) auto; align-items: center; gap: 14px; min-width: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .cashflow-annual-name strong { display: block; font: 600 16px var(--serif); }
@@ -533,6 +541,7 @@ main {
 .dialog-trades { margin-top: 14px; border-top: 1px solid var(--line); }
 .dialog-trade { display: grid; grid-template-columns: 1fr .5fr 1fr; padding: 9px 0; border-bottom: 1px solid var(--line); font: 12px var(--mono); }
 .dialog-disclaimer { margin: 24px 0 0; color: var(--muted); font-size: 11px; }
+.etf-disclaimer { margin-top: 0; font-size: 13px; line-height: 1.7; }
 .notice { padding: 40px; }
 
 @media (min-width: 1500px) {

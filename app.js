@@ -20,6 +20,7 @@ const riskGroups = [
   { name: "地产租金与广告", industries: ["房地产", "传媒"] },
   { name: "医药医疗", industries: ["医药生物"] },
   { name: "商品价格", industries: ["石油石化", "有色金属"] },
+  { name: "ETF（不穿透）", industries: ["ETF"] },
 ];
 const state = { side: "全部", calendarMonth: null };
 const chartState = { holding: null, frame: 0, drag: null };
@@ -78,8 +79,6 @@ function renderHeader() {
 function renderOverview() {
   const s = data.stats;
   const performance = window.LUMOS_PERFORMANCE;
-  const cash = s.capital - s.costTotal;
-  const cashPct = cash / s.capital * 100;
   const marketComposition = data.holdings.map((holding) => ({
     name: holding.name,
     industry: holding.industry,
@@ -114,10 +113,10 @@ function renderOverview() {
       <div class="metric-label">${item.label}<span>${item.code}</span></div>
       <div class="metric-value ${item.cls || ""}">${item.value}</div>
       ${item.total
-        ? `<div class="metric-foot-row"><span class="metric-foot">${item.foot}</span><span class="metric-total" title="当前持仓按 ${data.dataDate} 收盘价估值；交易记录截至 ${data.ledgerDate}。总盈亏包含已清仓收益、到账分红及红利税；历史清仓红利税按持有期或券商汇总核算。">总盈亏 <strong class="${item.totalClass}">${item.total}</strong></span></div>`
+        ? `<div class="metric-foot-row"><span class="metric-foot">${item.foot}</span><span class="metric-total" title="股票、ETF 与已清仓 REIT 按交易和到账分红记录计算总盈亏；现价日期见各只持仓。">已记录盈亏 <strong class="${item.totalClass}">${item.total}</strong></span></div>`
         : `<div class="metric-foot">${item.foot}</div>`}
     </article>`).join("");
-  renderPnlCalendar(performance, data.dataDate);
+  renderPnlCalendar(performance, performance?.end || data.dataDate);
 
   const featuredPct = featuredValue / s.marketTotal * 100;
   const closeDateLabel = closeDates.length === 1 ? `${closeDates[0]} 收盘` : `${closeDates[0]}—${closeDates.at(-1)} 收盘`;
@@ -150,7 +149,8 @@ function renderOverview() {
     const weight = item.value / s.marketTotal * 100;
     return `<div class="industry-row"><span>${esc(item.name)}</span><div class="industry-track"><span style="width:${Math.min(weight / 30 * 100, 100)}%"></span></div><strong>${number(weight)}%</strong></div>`;
   }).join("");
-  const estimatedPositionPct = s.marketTotal / (s.marketTotal + cash) * 100;
+  const estimatedCash = s.investedCapital - s.costTotal;
+  const estimatedPositionPct = s.marketTotal / (s.marketTotal + estimatedCash) * 100;
   const coordinates = [
     [`${number(topFiveValue / s.marketTotal * 100)}%`, "前五大占比"],
     [`${number(estimatedPositionPct)}%`, "估算仓位"],
@@ -166,7 +166,7 @@ function renderOverview() {
     <article class="recent-item">
       <time class="recent-date" datetime="${trade.date}">${trade.date}</time>
       <div class="recent-company"><strong>${esc(trade.name)}</strong><small>${trade.code}</small></div>
-      <div class="recent-side ${trade.side === "买入" ? "positive" : "negative"}">${trade.side}<small>${trade.shares} 股 @ ${number(trade.price)}</small></div>
+      <div class="recent-side ${trade.side === "买入" ? "positive" : "negative"}">${trade.side}<small>${trade.shares} ${trade.assetType === "ETF" || trade.assetType === "REIT" ? "份" : "股"} @ ${number(trade.price, trade.assetType === "ETF" || trade.assetType === "REIT" ? 4 : 2)}</small></div>
       <div class="recent-reason">${esc(trade.reason || "未记录交易理由")}</div>
     </article>`).join("");
 }
@@ -179,9 +179,11 @@ function renderPnlCalendar(performance, snapshotDate) {
   const month = state.calendarMonth || latestMonth;
   state.calendarMonth = month < earliestMonth ? earliestMonth : month > latestMonth ? latestMonth : month;
   if (state.calendarMonth !== month) return renderPnlCalendar(performance, snapshotDate);
-  const byDate = new Map(entries.filter((entry) => entry.date.startsWith(month))
-    .map((entry) => [entry.date, entry.amount]));
-  const monthlyTotal = [...byDate.values()].reduce((sum, amount) => sum + amount, 0);
+  const monthEntries = entries.filter((entry) => entry.date.startsWith(month));
+  const byDate = new Map(monthEntries.map((entry) => [entry.date, entry]));
+  const monthlyTotal = monthEntries.reduce((sum, entry) => sum + entry.amount, 0);
+  const stockDays = monthEntries.filter((entry) => entry.stockIncluded).length;
+  const mixedCoverage = stockDays > 0 && stockDays < monthEntries.length;
   const [year, monthNumber] = month.split("-").map(Number);
   const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
   const firstDay = new Date(Date.UTC(year, monthNumber - 1, 1));
@@ -191,9 +193,11 @@ function renderPnlCalendar(performance, snapshotDate) {
   $("#pnl-calendar-prev").disabled = month <= earliestMonth;
   $("#pnl-calendar-next").disabled = month >= latestMonth;
   const total = $("#pnl-calendar-total");
+  $("#pnl-calendar-total-label").textContent = mixedCoverage ? "分口径月合计" : stockDays ? "股票与 ETF 月累计" : "ETF 月累计";
   total.textContent = byDate.size ? signedMoney(monthlyTotal) : "—";
   total.className = byDate.size ? pnlClass(monthlyTotal) : "";
-  $("#pnl-calendar-foot").textContent = `${byDate.size} 天盈亏记录 · 按收盘持仓及当日现金流估算 · 无记录日期留空`;
+  const coverage = mixedCoverage ? "本月前期仅 ETF，后期计入现持股票" : stockDays ? "现持股票与 ETF" : "仅 ETF";
+  $("#pnl-calendar-foot").textContent = `${byDate.size} 天盈亏记录 · ${coverage} · 按逐笔成交、分红和收盘价计算；已清仓股票及 REIT 仅计入总盈亏`;
 
   const cells = Array.from({ length: mondayOffset }, () => '<div class="calendar-empty" aria-hidden="true"></div>');
   for (let day = 1; day <= daysInMonth; day += 1) {
@@ -202,9 +206,10 @@ function renderPnlCalendar(performance, snapshotDate) {
     const date = `${month}-${String(day).padStart(2, "0")}`;
     const isFuture = date > snapshotDate;
     const isLatest = date === snapshotDate;
-    const amount = byDate.get(date);
+    const entry = byDate.get(date);
+    const amount = entry?.amount;
     const amountLabel = amount === undefined ? "" : `<span class="${pnlClass(amount)}">${signedMoney(amount)}</span>`;
-    const accessibleLabel = `${date}${isLatest ? "，最新收盘" : ""}${amount === undefined ? "" : `，盈亏 ${signedMoney(amount)}`}`;
+    const accessibleLabel = `${date}${isLatest ? "，最新收盘" : ""}${amount === undefined ? "" : `，${entry.stockIncluded ? "现持股票与 ETF" : "仅 ETF"}盈亏 ${signedMoney(amount)}`}`;
     cells.push(`<div role="gridcell" class="${isFuture ? "calendar-future" : ""}${isLatest ? " calendar-latest" : ""}" aria-label="${accessibleLabel}"><time datetime="${date}">${day}</time>${amountLabel}</div>`);
   }
   while (cells.length % 5) cells.push('<div class="calendar-empty" aria-hidden="true"></div>');
@@ -219,7 +224,7 @@ function renderPnlCalendar(performance, snapshotDate) {
 function shiftPnlCalendar(offset) {
   const [year, month] = state.calendarMonth.split("-").map(Number);
   state.calendarMonth = new Date(Date.UTC(year, month - 1 + offset, 1)).toISOString().slice(0, 7);
-  renderPnlCalendar(window.LUMOS_PERFORMANCE, data.dataDate);
+  renderPnlCalendar(window.LUMOS_PERFORMANCE, window.LUMOS_PERFORMANCE?.end || data.dataDate);
 }
 
 function drawReturnChart() {
@@ -308,31 +313,43 @@ function filteredHoldings() {
     .filter((holding) => industry === "all" || holding.industry === industry)
     .sort((a, b) => {
       if (sort === "pnl") return b.pnl - a.pnl;
-      if (sort === "recent") return b.firstBuy.localeCompare(a.firstBuy);
-      return b.shares * b.unitCost - a.shares * a.unitCost;
+      if (sort === "recent") return (b.firstBuy || "").localeCompare(a.firstBuy || "");
+      return (b.costTotal ?? b.shares * b.unitCost) - (a.costTotal ?? a.shares * a.unitCost);
     });
 }
 
 function renderHoldings() {
   const holdings = filteredHoldings();
   $("#holding-result-count").textContent = `显示 ${holdings.length} / ${data.holdings.length} 只持仓`;
-  $("#holdings-list").innerHTML = holdings.length ? holdings.map((holding, index) => {
-    const cost = holding.shares * holding.unitCost;
+  const holdingRow = (holding, index) => {
+    const cost = holding.costTotal ?? holding.shares * holding.unitCost;
     const market = holding.shares * holding.closePrice;
+    const isEtf = holding.assetType === "ETF";
     return `<button class="holding-row" data-code="${holding.code}" style="--i:${index}" aria-label="查看 ${esc(holding.name)} 持仓详情">
       <span class="holding-name"><i class="holding-monogram">${esc(holding.name.slice(0, 1))}</i><span><strong>${esc(holding.name)}</strong><small>${holding.code} · ${esc(holding.industry)}</small></span></span>
-      <span><span class="cell-label">持有</span><span class="cell-value">${holding.shares} 股</span><span class="cell-sub">持有 ${holding.holdDays} 天</span></span>
-      <span><span class="cell-label">成本 / 现价</span><span class="cell-value">${number(holding.unitCost, 3)} / ${number(holding.closePrice)}</span><span class="cell-sub">${holding.closeDate} 收盘</span></span>
+      <span><span class="cell-label">持有</span><span class="cell-value">${holding.shares} ${isEtf ? "份" : "股"}</span><span class="cell-sub">${isEtf ? esc(holding.industryDetail) : `持有 ${holding.holdDays} 天`}</span></span>
+      <span><span class="cell-label">成本 / 现价</span><span class="cell-value">${number(holding.unitCost, 3)} / ${number(holding.closePrice, isEtf ? 3 : 2)}</span><span class="cell-sub">${holding.closeDate} ${isEtf && !holding.klineDate ? "持仓截图" : "收盘"}</span></span>
       <span><span class="cell-label">持仓市值</span><span class="cell-value">${money(market)}</span><span class="cell-sub">成本 ${money(cost)}</span></span>
       <span class="${pnlClass(holding.pnl)}"><span class="cell-label">浮动盈亏</span><span class="cell-value">${signed(holding.pnl)}</span><span class="cell-sub">${signed(holding.pnlPct)}%</span></span>
       <span class="holding-arrow" aria-hidden="true">↗</span>
     </button>`;
-  }).join("") : emptyState("没有匹配的持仓", "请调整名称、代码或行业筛选条件。");
+  };
+  const tableHead = `<div class="holdings-table-head" aria-hidden="true"><span>标的 / 分类</span><span>持有</span><span>成本 / 现价</span><span>持仓市值</span><span>浮动盈亏</span><span></span></div>`;
+  const groups = [
+    { title: "股票", items: holdings.filter((holding) => holding.assetType !== "ETF") },
+    { title: "ETF", items: holdings.filter((holding) => holding.assetType === "ETF") },
+  ];
+  $("#holdings-list").innerHTML = holdings.length ? groups.filter((group) => group.items.length).map((group) => `
+    <section class="holding-group" aria-label="${group.title}持仓">
+      <div class="holding-group-heading"><h2>${group.title}</h2><span>${group.items.length} 只</span></div>
+      ${tableHead}
+      ${group.items.map(holdingRow).join("")}
+    </section>`).join("") : emptyState("没有匹配的持仓", "请调整名称、代码或行业筛选条件。");
   $$(".holding-row", $("#holdings-list")).forEach((row) => row.addEventListener("click", () => openHolding(row.dataset.code)));
 }
 
 function priceChart(stock) {
-  const held = Array.isArray(stock.trades);
+  const held = stock.assetType !== "ETF" && Array.isArray(stock.trades);
   const range = stock.klineStart ? `${stock.klineStart} — ${stock.klineDate}` : "暂无日线数据";
   return `<section class="price-chart" aria-label="${esc(stock.name)} 日 K 线">
     <div class="chart-heading"><h3>${held ? "日 K 与买卖点" : "日 K 线"}</h3><span id="chart-range">${range}</span></div>
@@ -344,24 +361,26 @@ function priceChart(stock) {
 function openHolding(code) {
   const holding = data.holdings.find((item) => item.code === code);
   if (!holding) return;
+  const isEtf = holding.assetType === "ETF";
   $("#dialog-content").innerHTML = `
-    <div class="dialog-hero"><p class="eyebrow">${esc(holding.industry)} · ${esc(holding.industryDetail)}</p><h2 id="dialog-title">${esc(holding.name)}<small>${holding.code}</small></h2><p>首次买入 ${esc(holding.firstBuy)} · 已持有 ${holding.holdDays} 天</p></div>
+    <div class="dialog-hero"><p class="eyebrow">${esc(holding.industry)} · ${esc(holding.industryDetail)}</p><h2 id="dialog-title">${esc(holding.name)}<small>${holding.code}</small></h2><p>${isEtf ? `持仓快照 · ${esc(holding.closeDate)}` : `首次买入 ${esc(holding.firstBuy)} · 已持有 ${holding.holdDays} 天`}</p></div>
     <dl class="dialog-metrics">
-      <div><dt>持有股数</dt><dd>${holding.shares} 股</dd></div>
-      <div><dt>摊薄成本</dt><dd>${number(holding.unitCost, 3)}</dd></div>
-      <div><dt>收盘价格</dt><dd>${number(holding.closePrice)}</dd></div>
+      <div><dt>持有${isEtf ? "份额" : "股数"}</dt><dd>${holding.shares} ${isEtf ? "份" : "股"}</dd></div>
+      <div><dt>${isEtf ? "截图单位成本" : "摊薄成本"}</dt><dd>${number(holding.unitCost, 3)}</dd></div>
+      <div><dt>${isEtf && !holding.klineDate ? "截图价格" : "收盘价格"}</dt><dd>${number(holding.closePrice, isEtf ? 3 : 2)}</dd></div>
       <div><dt>浮动盈亏</dt><dd class="${pnlClass(holding.pnl)}">${signed(holding.pnlPct)}%</dd></div>
     </dl>
     <div class="dialog-body">
+      ${isEtf ? `<p class="dialog-disclaimer etf-disclaimer">当前持仓成本以券商快照为准；历史买卖及到账分红已按对账单计入组合总盈亏。</p>${holding.klines.length ? priceChart(holding) : ""}` : `
       <h3>买入理由</h3><p class="dialog-reason">${esc(holding.reason || "未记录买入理由")}</p>
       <p class="dialog-profile">${esc(holding.profile || "尚未记录公司概况")}</p>
       ${priceChart(holding)}
-      <h3>相关成交</h3><div class="dialog-trades">${holding.trades.slice().sort((a, b) => b.date.localeCompare(a.date)).map((trade) => `<div class="dialog-trade"><time>${trade.date}</time><span class="${trade.side === "买入" ? "positive" : "negative"}">${trade.side}</span><span>${trade.shares} 股 @ ${number(trade.price)}</span></div>`).join("")}</div>
-      <p class="dialog-disclaimer">摊薄成本已受历史买卖与分红影响，浮动盈亏不代表持有至今的总收益。</p>
+      <h3>相关成交</h3><div class="dialog-trades">${holding.trades.slice().sort((a, b) => b.date.localeCompare(a.date)).map((trade) => `<div class="dialog-trade"><time>${trade.date}</time><span class="${trade.side === "买入" ? "positive" : "negative"}">${trade.side}</span><span>${trade.shares} ${trade.assetType === "ETF" || trade.assetType === "REIT" ? "份" : "股"} @ ${number(trade.price, trade.assetType === "ETF" || trade.assetType === "REIT" ? 4 : 2)}</span></div>`).join("")}</div>
+      <p class="dialog-disclaimer">摊薄成本已受历史买卖与分红影响，浮动盈亏不代表持有至今的总收益。</p>`}
     </div>`;
   chartState.holding = holding;
   $("#holding-dialog").showModal();
-  requestAnimationFrame(() => {
+  if (holding.klines.length) requestAnimationFrame(() => {
     drawKline();
     const scroll = $("#chart-scroll");
     scroll.scrollLeft = scroll.scrollWidth;
@@ -564,8 +583,8 @@ function renderTrades() {
       <time datetime="${trade.date}">${trade.date}</time>
       <div class="company">${esc(trade.name)}<small>${trade.code}</small></div>
       <span class="trade-side ${trade.side === "买入" ? "positive" : "negative"}">${trade.side}</span>
-      <span class="number">${trade.shares} 股</span>
-      <span class="number">${number(trade.price)}</span>
+      <span class="number">${trade.shares} ${trade.assetType === "ETF" || trade.assetType === "REIT" ? "份" : "股"}</span>
+      <span class="number">${number(trade.price, trade.assetType === "ETF" || trade.assetType === "REIT" ? 4 : 2)}</span>
       <div><span class="number">${money(trade.amount)}</span><div class="fee">费用 ${money(trade.fee)}</div></div>
       <div class="trade-reason${trade.reason ? "" : " is-empty"}"><span class="trade-reason-label">原因</span>${trade.reason ? esc(trade.reason) : "—"}</div>
     </article>`).join("") : emptyState("没有匹配的交易", "请调整交易方向或搜索条件。");
@@ -637,38 +656,46 @@ function renderCashFlow() {
   const flow = data.cashFlow;
   if (!flow) return;
   $("#cashflow-annual-total").textContent = money(flow.annualGross);
-  const portfolioYield = data.stats.marketTotal > 0
-    ? `${number(flow.annualGross / data.stats.marketTotal * 100)}%` : "—";
+  const marketTotal = data.holdings.reduce((sum, holding) => sum + holding.shares * holding.closePrice, 0);
+  const portfolioYield = marketTotal > 0
+    ? `${number(flow.annualGross / marketTotal * 100)}%` : "—";
   $("#cashflow-annual-yield").textContent = `持仓股息率 ${portfolioYield}`;
-  $("#cashflow-annual-basis").textContent = `${flow.referenceYear} 年派息 · 按收盘市值`;
+  $("#cashflow-annual-basis").textContent = `股票 ${money(flow.stockAnnualGross)} · ETF ${money(flow.etfAnnualGross)}`;
   $("#cashflow-received-gross").textContent = money(flow.receivedGross);
   $("#cashflow-tax-total").textContent = money(flow.confirmedTax);
   $("#cashflow-net-total").textContent = money(flow.receivedNet);
-  $("#cashflow-method").textContent = `预计年分红按 ${flow.referenceYear} 年每股税前分红静态测算，持仓股息率以 ${data.dataDate} 收盘市值为分母；未来派息、持股数和红利税均可能变化。已公布待到账的单次分红不再加到年分红参考或累计实收中。`;
+  $("#cashflow-method").textContent = `股票按 ${flow.referenceYear} 年每股税前分红、ETF 按 ${flow.etfReferenceStart} 至 ${flow.etfReferenceEnd} 已公布的每份派息，均乘以当前持仓计算年参考额；${flow.etfNoHistoryCount} 只 ETF 近 12 个月无已核派息，暂按零计。持仓股息率以 ${data.dataDate} 股票与 ETF 收盘市值为分母。ETF 派息记录核对至 ${flow.etfDividendAsOf}；预计金额不代表未来分红承诺，实际到账及税款仍按流水计算。`;
 
-  $("#cashflow-announced-caption").textContent = `${flow.announced.length} 笔 · 按当前股数估算税前 ${money(flow.announcedGrossIfHeld)} · 公告核对至 ${flow.announcementsAsOf}`;
+  $("#cashflow-announced-caption").textContent = `${flow.announced.length} 笔（ETF ${flow.etfAnnouncedCount} 笔）· 按当前份额或股数估算 ${money(flow.announcedGrossIfHeld)} · ETF ${flow.etfHoldingsCount} 只核对至 ${flow.etfAnnouncementsAsOf}`;
   $("#cashflow-announced-list").innerHTML = flow.announced.length ? flow.announced.map((item) => `
     <article class="cashflow-announced-card">
       <div class="cashflow-card-top"><div><span class="eyebrow">${esc(item.period)}</span><h3>${esc(item.name)}</h3><small>${esc(item.code)}</small></div><strong>${money(item.grossIfHeld)}</strong></div>
-      <p class="cashflow-card-formula">${number(item.shares, 0)} 股 × ${number(item.dps, 4)} 元/股 · 税前条件估算</p>
+      <p class="cashflow-card-formula">${number(item.shares, 0)} ${item.unit} × ${number(item.dps, 4)} 元/${item.unit} · 税前条件估算</p>
       <p class="cashflow-card-stage">${esc(item.stage)}</p>
       <div class="cashflow-card-dates"><span>公告 ${esc(item.announcedDate)}</span><span>登记 ${esc(item.recordDate || "待公布")}</span><span>除息/发放 ${esc(item.exDate || "待公布")}</span></div>
       <a href="${esc(item.source)}" target="_blank" rel="noopener noreferrer">查看公告来源 ↗</a>
     </article>`).join("") : emptyState("暂无待到账公告", "后续公布的分红会在核对后列入这里。");
 
   const maxAnnual = Math.max(...flow.annual.map((row) => row.gross), 1);
-  $("#cashflow-annual-list").innerHTML = flow.annual.map((item) => `
-    <div class="cashflow-annual-row">
-      <div class="cashflow-annual-name"><strong>${esc(item.name)}</strong><small>${esc(item.code)} · ${number(item.shares, 0)} 股 × ${number(item.dps, 4)} 元</small></div>
-      <div class="cashflow-annual-track"><span style="width:${Math.max(item.gross / maxAnnual * 100, 2)}%"></span></div>
-      <strong class="cashflow-annual-amount">${money(item.gross)}</strong>
+  $("#cashflow-annual-list").innerHTML = [
+    { type: "股票", gross: flow.stockAnnualGross, note: `${flow.referenceYear} 年每股分红` },
+    { type: "ETF", gross: flow.etfAnnualGross, note: `${flow.etfReferenceStart} 至 ${flow.etfReferenceEnd} 派息` },
+  ].map((group) => `
+    <div class="cashflow-annual-group">
+      <div class="cashflow-annual-group-head"><h3>${group.type}</h3><span>${esc(group.note)} · ${money(group.gross)}</span></div>
+      <div class="cashflow-annual-list">${flow.annual.filter((item) => item.assetType === group.type).map((item) => `
+        <div class="cashflow-annual-row">
+          <div class="cashflow-annual-name"><strong>${esc(item.name)}</strong><small>${esc(item.code)} · ${number(item.shares, 0)} ${item.unit} × ${number(item.dps, 4)} 元/${item.unit}${item.assetType === "ETF" ? ` · ${esc(item.reference)}` : ""}</small></div>
+          <div class="cashflow-annual-track"><span style="width:${item.gross ? Math.max(item.gross / maxAnnual * 100, 2) : 0}%"></span></div>
+          <strong class="cashflow-annual-amount">${item.gross ? money(item.gross) : "—"}</strong>
+        </div>`).join("")}</div>
     </div>`).join("");
 
   $("#cashflow-received-caption").textContent = `${flow.received.length} 笔 · 毛额 ${money(flow.receivedGross)} − 已确认税 ${money(flow.confirmedTax)} = 净实收 ${money(flow.receivedNet)}`;
   const ledgerRow = (item, historical) => `
     <div class="cashflow-ledger-row">
       <div class="cashflow-ledger-date"><time>${esc(item.date)}</time>${item.dateNote ? `<small>${esc(item.dateNote)}</small>` : ""}</div>
-      <div class="cashflow-ledger-company"><strong>${esc(item.name)}</strong><small>${esc(item.period)}${item.shares ? ` · ${number(item.shares, 0)} 股` : ""}</small></div>
+      <div class="cashflow-ledger-company"><strong>${esc(item.name)}</strong><small>${esc(item.period)}${item.shares ? ` · ${number(item.shares, 0)} ${item.unit || "股"}` : ""}</small></div>
       <div class="cashflow-ledger-number"><span>分红毛额</span><strong>${money(item.gross)}</strong></div>
       <div class="cashflow-ledger-number cashflow-tax"><span>红利税</span><strong>${item.tax ? `−${money(item.tax)}` : "—"}</strong><small>${historical ? "依历史记录核算" : (item.taxDate ? `扣税 ${esc(item.taxDate)}` : esc(item.taxStatus))}</small></div>
       <div class="cashflow-ledger-number cashflow-net"><span>${historical ? "净额" : "净实收"}</span><strong>${money(item.net)}</strong></div>

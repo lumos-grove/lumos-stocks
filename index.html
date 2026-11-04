@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=a536a0ef473d">
   <title>Lumos · 投资记录</title>
   <meta name="description" content="Lumos 投资记录：组合、持仓、交易、分红现金流、自选与笔记。">
-  <link rel="stylesheet" href="styles.css?v=e7b91a63d05d">
+  <link rel="stylesheet" href="styles.css?v=ea00d79c1205">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -51,7 +51,7 @@
         <span></span><span></span>
       </button>
       <div class="breadcrumb"><span>Lumos</span><i>/</i><strong id="current-section">投资总览</strong></div>
-      <div class="snapshot"><span class="snapshot-dot"></span>收盘快照 <time id="data-date"></time><span id="ledger-date" hidden></span></div>
+      <div class="snapshot"><span class="snapshot-dot"></span>行情快照 <time id="data-date"></time><span id="ledger-date" hidden></span></div>
     </header>
 
     <main id="main-content" tabindex="-1">
@@ -78,7 +78,7 @@
                 <span id="pnl-calendar-month" aria-live="polite" aria-atomic="true"></span>
                 <button type="button" id="pnl-calendar-next" aria-label="下个月" aria-controls="pnl-calendar">›</button>
               </div>
-              <div class="pnl-calendar-total" aria-live="polite" aria-atomic="true"><span>月累计</span><strong id="pnl-calendar-total"></strong></div>
+              <div class="pnl-calendar-total" aria-live="polite" aria-atomic="true"><span id="pnl-calendar-total-label">已记录合计</span><strong id="pnl-calendar-total"></strong></div>
             </div>
     <div id="pnl-calendar" class="pnl-calendar"></div>
             <p class="pnl-calendar-foot" id="pnl-calendar-foot"></p>
@@ -105,30 +105,30 @@
 
           <article class="paper-panel return-panel">
             <div class="panel-heading">
-              <div><p class="eyebrow">PERFORMANCE</p><h2>今年收益曲线</h2></div>
+              <div><p class="eyebrow">PERFORMANCE</p><h2>股票收益曲线</h2></div>
               <span class="small-sun" aria-hidden="true">✳</span>
             </div>
             <div class="return-summary"><div><span>按累计净投入估算</span><strong id="return-total"></strong></div></div>
-            <div class="return-chart-wrap"><canvas id="return-chart" role="img" aria-label="今年按累计净投入估算的持仓收益率曲线"></canvas></div>
-            <div class="return-chart-foot"><span id="return-range"></span><span>不含闲置现金</span></div>
-            <p class="method-note">估算，不代表真实数值。</p>
+            <div class="return-chart-wrap"><canvas id="return-chart" role="img" aria-label="今年按累计净投入估算的股票收益率曲线"></canvas></div>
+            <div class="return-chart-foot"><span id="return-range"></span><span>仅股票 · 不含闲置现金</span></div>
+            <p class="method-note">股票收益曲线仅计现持股票；收益日历自 2025-05-30 计入 ETF，2026-03-23 起同时计入现持股票。已清仓股票与 REIT 仅计入上方总盈亏。</p>
           </article>
         </div>
 
         <section class="content-section" aria-labelledby="industry-title">
           <div class="section-heading">
             <div><span class="section-number">01</span><h2 id="industry-title">组合结构</h2></div>
-            <p>行业分布与持仓集中度</p>
+            <p>股票行业、ETF 与持仓集中度</p>
           </div>
           <div class="two-column-section">
             <article class="plain-panel">
-              <div class="subheading"><h3>行业配置</h3><span>占持仓市值</span></div>
+              <div class="subheading"><h3>股票行业与 ETF</h3><span>占持仓市值</span></div>
               <div class="industry-list" id="industry-list"></div>
             </article>
             <article class="plain-panel concentration-panel">
               <div class="subheading"><h3>集中度与风险敞口</h3><span>按持仓市值</span></div>
               <div class="coordinates" id="portfolio-coordinates"></div>
-              <div class="risk-exposure-scroll" tabindex="0" role="region" aria-label="风险敞口，可上下滚动查看全部项目">
+                <div class="risk-exposure-scroll" tabindex="0" role="region" aria-label="股票风险敞口及 ETF 类别，可上下滚动查看全部项目">
                 <div class="risk-exposure-list" id="risk-exposure-list"></div>
               </div>
             </article>
@@ -146,8 +146,8 @@
 
       <section class="view" id="view-holdings" data-view="holdings" aria-labelledby="holdings-title" hidden>
         <div class="page-heading">
-          <div><p class="eyebrow">OWNED BUSINESSES</p><h1 id="holdings-title">当前持仓</h1></div>
-          <p>按公司名称、代码或行业查找。<br>点击持仓可查看买入理由与成交记录。</p>
+          <div><p class="eyebrow">HOLDINGS</p><h1 id="holdings-title">当前持仓</h1></div>
+          <p>按名称、代码或行业查找。<br>点击持仓可查看详细信息。</p>
         </div>
         <div class="toolbar">
           <label class="search-box"><span aria-hidden="true">⌕</span><input id="holding-search" type="search" placeholder="搜索名称或代码" aria-label="搜索持仓"></label>
@@ -156,7 +156,6 @@
         </div>
         <div class="result-line"><span id="holding-result-count"></span><span>单位：人民币</span></div>
         <div class="holdings-table-wrap">
-          <div class="holdings-table-head" aria-hidden="true"><span>公司 / 行业</span><span>持有</span><span>成本 / 现价</span><span>持仓市值</span><span>浮动盈亏</span><span></span></div>
           <div class="holdings-list" id="holdings-list"></div>
         </div>
       </section>
@@ -189,7 +188,7 @@
 
         <div class="cashflow-summary" aria-label="分红概览">
           <article class="cashflow-figure cashflow-figure-primary">
-            <span>预计年分红 · 税前</span><strong id="cashflow-annual-total"></strong>
+            <span>当前持仓预计年分红 · 税前</span><strong id="cashflow-annual-total"></strong>
             <div class="cashflow-figure-foot"><small id="cashflow-annual-yield"></small><small id="cashflow-annual-basis"></small></div>
           </article>
           <article class="cashflow-figure"><span>当前持仓累计到账</span><strong id="cashflow-received-gross"></strong><small>毛额</small></article>
@@ -204,8 +203,8 @@
         </section>
 
         <section class="cashflow-section" aria-labelledby="cashflow-annual-title">
-          <div class="section-heading"><div><span class="section-number">02</span><h2 id="cashflow-annual-title">年分红参考构成</h2></div><p>当前股数 × 基准年度每股分红</p></div>
-          <div class="cashflow-annual-list" id="cashflow-annual-list"></div>
+          <div class="section-heading"><div><span class="section-number">02</span><h2 id="cashflow-annual-title">年分红参考构成</h2></div><p>按当前股数／份额计算</p></div>
+          <div class="cashflow-annual-groups" id="cashflow-annual-list"></div>
         </section>
 
         <section class="cashflow-section" aria-labelledby="cashflow-received-title">
@@ -241,7 +240,7 @@
 
       <footer class="site-footer">
         <div><span class="footer-mark">L</span><p>Lumos · 投资记录<small>数据来自个人 Obsidian 仓库</small></p></div>
-        <p>价格均为标注日期的收盘价，非实时行情。<br>个人记录，不构成投资建议。</p>
+        <p>价格按标注日期记录；ETF 可使用持仓截图价格，非实时行情。<br>个人记录，不构成投资建议。</p>
       </footer>
     </main>
   </div>
@@ -251,9 +250,9 @@
     <div id="dialog-content"></div>
   </dialog>
 
-  <script src="data.js?v=c69804bf1fb8"></script>
-  <script src="performance-data.js?v=d59bd4839e09"></script>
+  <script src="data.js?v=5d928aac8d6e"></script>
+  <script src="performance-data.js?v=9c087c3613c3"></script>
   <script src="notes-data.js?v=0418801a26a4"></script>
-  <script src="app.js?v=9d8ffeafa0aa"></script>
+  <script src="app.js?v=8a19169dd0dc"></script>
 </body>
 </html>
