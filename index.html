@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#173a32">
   <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=a536a0ef473d">
   <title>Lumos · 投资记录</title>
-  <meta name="description" content="Lumos 投资记录：组合、持仓、交易、自选与笔记。">
-  <link rel="stylesheet" href="styles.css?v=ecf5ce79f106">
+  <meta name="description" content="Lumos 投资记录：组合、持仓、交易、分红现金流、自选与笔记。">
+  <link rel="stylesheet" href="styles.css?v=e7b91a63d05d">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -23,10 +23,11 @@
 
     <nav class="nav-list">
       <a href="#overview" data-route="overview"><span class="nav-index">01</span>投资总览<span class="nav-arrow">↗</span></a>
-      <a href="#holdings" data-route="holdings"><span class="nav-index">02</span>我的持仓<span class="nav-count" id="nav-holding-count"></span></a>
-      <a href="#trades" data-route="trades"><span class="nav-index">03</span>交易记录<span class="nav-count" id="nav-trade-count"></span></a>
-      <a href="#watchlist" data-route="watchlist"><span class="nav-index">04</span>观察清单<span class="nav-count" id="nav-watchlist-count"></span></a>
-      <a href="#notes" data-route="notes"><span class="nav-index">05</span>投资笔记<span class="nav-count" id="nav-note-count"></span></a>
+      <a href="#cashflow" data-route="cashflow"><span class="nav-index">02</span>分红现金流<span class="nav-coin" aria-hidden="true">¥</span></a>
+      <a href="#holdings" data-route="holdings"><span class="nav-index">03</span>我的持仓<span class="nav-count" id="nav-holding-count"></span></a>
+      <a href="#trades" data-route="trades"><span class="nav-index">04</span>交易记录<span class="nav-count" id="nav-trade-count"></span></a>
+      <a href="#watchlist" data-route="watchlist"><span class="nav-index">05</span>观察清单<span class="nav-count" id="nav-watchlist-count"></span></a>
+      <a href="#notes" data-route="notes"><span class="nav-index">06</span>投资笔记<span class="nav-count" id="nav-note-count"></span></a>
     </nav>
 
     <div class="sidebar-principle">
@@ -180,6 +181,47 @@
         </div>
       </section>
 
+      <section class="view" id="view-cashflow" data-view="cashflow" aria-labelledby="cashflow-title" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">DIVIDENDS & CASH FLOW</p><h1 id="cashflow-title">分红现金流</h1></div>
+          <p>分红到账、补扣红利税与已公布方案。<br>税前参考、实际入账和待到账分开计算。</p>
+        </div>
+
+        <div class="cashflow-summary" aria-label="分红概览">
+          <article class="cashflow-figure cashflow-figure-primary">
+            <span>预计年分红 · 税前</span><strong id="cashflow-annual-total"></strong>
+            <div class="cashflow-figure-foot"><small id="cashflow-annual-yield"></small><small id="cashflow-annual-basis"></small></div>
+          </article>
+          <article class="cashflow-figure"><span>当前持仓累计到账</span><strong id="cashflow-received-gross"></strong><small>毛额</small></article>
+          <article class="cashflow-figure"><span>已确认红利税</span><strong id="cashflow-tax-total"></strong><small>按实际扣款记录</small></article>
+          <article class="cashflow-figure"><span>当前持仓净实收</span><strong id="cashflow-net-total"></strong><small>到账毛额 − 已确认税款</small></article>
+        </div>
+        <p class="cashflow-method" id="cashflow-method"></p>
+
+        <section class="cashflow-section" aria-labelledby="cashflow-announced-title">
+          <div class="section-heading"><div><span class="section-number">01</span><h2 id="cashflow-announced-title">已公布 · 待到账</h2></div><p id="cashflow-announced-caption"></p></div>
+          <div class="cashflow-announced-grid" id="cashflow-announced-list"></div>
+        </section>
+
+        <section class="cashflow-section" aria-labelledby="cashflow-annual-title">
+          <div class="section-heading"><div><span class="section-number">02</span><h2 id="cashflow-annual-title">年分红参考构成</h2></div><p>当前股数 × 基准年度每股分红</p></div>
+          <div class="cashflow-annual-list" id="cashflow-annual-list"></div>
+        </section>
+
+        <section class="cashflow-section" aria-labelledby="cashflow-received-title">
+          <div class="section-heading"><div><span class="section-number">03</span><h2 id="cashflow-received-title">到账与扣税</h2></div><p id="cashflow-received-caption"></p></div>
+          <div class="cashflow-ledger-head" aria-hidden="true"><span>到账日期</span><span>标的 / 批次</span><span>分红毛额</span><span>红利税</span><span>净实收</span></div>
+          <div id="cashflow-received-list"></div>
+        </section>
+
+        <section class="cashflow-section" aria-labelledby="cashflow-closed-title">
+          <div class="section-heading"><div><span class="section-number">04</span><h2 id="cashflow-closed-title">已清仓期间的分红</h2></div><p>与当前持仓净实收分列</p></div>
+          <p class="cashflow-closed-note" id="cashflow-closed-note"></p>
+          <div class="cashflow-ledger-head" aria-hidden="true"><span>到账日期</span><span>标的 / 批次</span><span>分红毛额</span><span>红利税</span><span>净额</span></div>
+          <div id="cashflow-closed-list"></div>
+        </section>
+      </section>
+
       <section class="view" id="view-watchlist" data-view="watchlist" aria-labelledby="watchlist-title" hidden>
         <div class="page-heading">
           <div><p class="eyebrow">WAIT & WATCH</p><h1 id="watchlist-title">观察清单</h1></div>
@@ -209,9 +251,9 @@
     <div id="dialog-content"></div>
   </dialog>
 
-  <script src="data.js?v=6f8c6c7ddf2b"></script>
-  <script src="performance-data.js?v=cfa3b2f02ca3"></script>
-  <script src="notes-data.js?v=6492d5b1a1ea"></script>
-  <script src="app.js?v=90c682bb3237"></script>
+  <script src="data.js?v=c69804bf1fb8"></script>
+  <script src="performance-data.js?v=d59bd4839e09"></script>
+  <script src="notes-data.js?v=0418801a26a4"></script>
+  <script src="app.js?v=9d8ffeafa0aa"></script>
 </body>
 </html>

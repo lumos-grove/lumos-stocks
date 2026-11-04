@@ -8,8 +8,8 @@ const signed = (value, digits = 2) => `${value >= 0 ? "+" : ""}${number(value, d
 const pnlClass = (value) => value >= 0 ? "positive" : "negative";
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 const emptyState = (title, copy) => `<div class="empty-state"><strong>${title}</strong><p>${copy}</p></div>`;
-const routes = ["overview", "holdings", "trades", "watchlist", "notes"];
-const routeNames = { overview: "投资总览", holdings: "我的持仓", trades: "交易记录", watchlist: "观察清单", notes: "投资笔记" };
+const routes = ["overview", "cashflow", "holdings", "trades", "watchlist", "notes"];
+const routeNames = { overview: "投资总览", holdings: "我的持仓", trades: "交易记录", cashflow: "分红现金流", watchlist: "观察清单", notes: "投资笔记" };
 const colors = ["#244b40", "#c75932", "#5b7e68", "#d58a5f", "#87a28b", "#b9754d", "#6d9278", "#db9b73"];
 const riskGroups = [
   { name: "居民消费", industries: ["食品饮料", "家用电器"] },
@@ -114,7 +114,7 @@ function renderOverview() {
       <div class="metric-label">${item.label}<span>${item.code}</span></div>
       <div class="metric-value ${item.cls || ""}">${item.value}</div>
       ${item.total
-        ? `<div class="metric-foot-row"><span class="metric-foot">${item.foot}</span><span class="metric-total" title="历史清仓记录补全后计算">总盈亏 <strong class="${item.totalClass}">${item.total}</strong></span></div>`
+        ? `<div class="metric-foot-row"><span class="metric-foot">${item.foot}</span><span class="metric-total" title="当前持仓按 ${data.dataDate} 收盘价估值；交易记录截至 ${data.ledgerDate}。总盈亏包含已清仓收益、到账分红及红利税；历史清仓红利税按持有期或券商汇总核算。">总盈亏 <strong class="${item.totalClass}">${item.total}</strong></span></div>`
         : `<div class="metric-foot">${item.foot}</div>`}
     </article>`).join("");
   renderPnlCalendar(performance, data.dataDate);
@@ -633,6 +633,51 @@ function renderNotes() {
   }));
 }
 
+function renderCashFlow() {
+  const flow = data.cashFlow;
+  if (!flow) return;
+  $("#cashflow-annual-total").textContent = money(flow.annualGross);
+  const portfolioYield = data.stats.marketTotal > 0
+    ? `${number(flow.annualGross / data.stats.marketTotal * 100)}%` : "—";
+  $("#cashflow-annual-yield").textContent = `持仓股息率 ${portfolioYield}`;
+  $("#cashflow-annual-basis").textContent = `${flow.referenceYear} 年派息 · 按收盘市值`;
+  $("#cashflow-received-gross").textContent = money(flow.receivedGross);
+  $("#cashflow-tax-total").textContent = money(flow.confirmedTax);
+  $("#cashflow-net-total").textContent = money(flow.receivedNet);
+  $("#cashflow-method").textContent = `预计年分红按 ${flow.referenceYear} 年每股税前分红静态测算，持仓股息率以 ${data.dataDate} 收盘市值为分母；未来派息、持股数和红利税均可能变化。已公布待到账的单次分红不再加到年分红参考或累计实收中。`;
+
+  $("#cashflow-announced-caption").textContent = `${flow.announced.length} 笔 · 按当前股数估算税前 ${money(flow.announcedGrossIfHeld)} · 公告核对至 ${flow.announcementsAsOf}`;
+  $("#cashflow-announced-list").innerHTML = flow.announced.length ? flow.announced.map((item) => `
+    <article class="cashflow-announced-card">
+      <div class="cashflow-card-top"><div><span class="eyebrow">${esc(item.period)}</span><h3>${esc(item.name)}</h3><small>${esc(item.code)}</small></div><strong>${money(item.grossIfHeld)}</strong></div>
+      <p class="cashflow-card-formula">${number(item.shares, 0)} 股 × ${number(item.dps, 4)} 元/股 · 税前条件估算</p>
+      <p class="cashflow-card-stage">${esc(item.stage)}</p>
+      <div class="cashflow-card-dates"><span>公告 ${esc(item.announcedDate)}</span><span>登记 ${esc(item.recordDate || "待公布")}</span><span>除息/发放 ${esc(item.exDate || "待公布")}</span></div>
+      <a href="${esc(item.source)}" target="_blank" rel="noopener noreferrer">查看公告来源 ↗</a>
+    </article>`).join("") : emptyState("暂无待到账公告", "后续公布的分红会在核对后列入这里。");
+
+  const maxAnnual = Math.max(...flow.annual.map((row) => row.gross), 1);
+  $("#cashflow-annual-list").innerHTML = flow.annual.map((item) => `
+    <div class="cashflow-annual-row">
+      <div class="cashflow-annual-name"><strong>${esc(item.name)}</strong><small>${esc(item.code)} · ${number(item.shares, 0)} 股 × ${number(item.dps, 4)} 元</small></div>
+      <div class="cashflow-annual-track"><span style="width:${Math.max(item.gross / maxAnnual * 100, 2)}%"></span></div>
+      <strong class="cashflow-annual-amount">${money(item.gross)}</strong>
+    </div>`).join("");
+
+  $("#cashflow-received-caption").textContent = `${flow.received.length} 笔 · 毛额 ${money(flow.receivedGross)} − 已确认税 ${money(flow.confirmedTax)} = 净实收 ${money(flow.receivedNet)}`;
+  const ledgerRow = (item, historical) => `
+    <div class="cashflow-ledger-row">
+      <div class="cashflow-ledger-date"><time>${esc(item.date)}</time>${item.dateNote ? `<small>${esc(item.dateNote)}</small>` : ""}</div>
+      <div class="cashflow-ledger-company"><strong>${esc(item.name)}</strong><small>${esc(item.period)}${item.shares ? ` · ${number(item.shares, 0)} 股` : ""}</small></div>
+      <div class="cashflow-ledger-number"><span>分红毛额</span><strong>${money(item.gross)}</strong></div>
+      <div class="cashflow-ledger-number cashflow-tax"><span>红利税</span><strong>${item.tax ? `−${money(item.tax)}` : "—"}</strong><small>${historical ? "依历史记录核算" : (item.taxDate ? `扣税 ${esc(item.taxDate)}` : esc(item.taxStatus))}</small></div>
+      <div class="cashflow-ledger-number cashflow-net"><span>${historical ? "净额" : "净实收"}</span><strong>${money(item.net)}</strong></div>
+    </div>`;
+  $("#cashflow-received-list").innerHTML = flow.received.map((item) => ledgerRow(item, false)).join("");
+  $("#cashflow-closed-note").textContent = `${flow.closed.length} 笔历史清仓分红：毛额 ${money(flow.closedGross)}，红利税 ${money(flow.closedEstimatedTax)}，净额 ${money(flow.closedNetEstimate)}。税款按持有期或券商汇总核算，与上方当前持仓到账分列。`;
+  $("#cashflow-closed-list").innerHTML = flow.closed.map((item) => ledgerRow(item, true)).join("");
+}
+
 function showNote(id) {
   const post = (window.LUMOS_NOTES || []).find((item) => item.id === id);
   if (!post) return false;
@@ -734,6 +779,7 @@ function init() {
   });
   renderHoldings();
   renderTrades();
+  renderCashFlow();
   renderWatchlist();
   renderNotes();
   setupEvents();
