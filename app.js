@@ -79,6 +79,14 @@ function renderHeader() {
 function renderOverview() {
   const s = data.stats;
   const performance = window.LUMOS_PERFORMANCE;
+  const champion = performance?.dailyChampion;
+  if (champion) {
+    $("#daily-champion-name").textContent = champion.name;
+    $("#daily-champion-pnl").textContent = `${champion.amount >= 0 ? "+" : "−"}${number(Math.abs(champion.amount))}`;
+    $("#daily-champion-date").textContent = champion.date.slice(5).replace("-", "/");
+    $("#daily-champion-date").dateTime = champion.date;
+    $("#daily-champion").title = `${champion.date} 按当日持仓市值变动计算，含当天交易现金影响`;
+  }
   const marketComposition = data.holdings.map((holding) => ({
     name: holding.name,
     industry: holding.industry,
