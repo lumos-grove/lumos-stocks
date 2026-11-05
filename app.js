@@ -22,7 +22,7 @@ const riskGroups = [
   { name: "商品价格", industries: ["石油石化", "有色金属"] },
   { name: "ETF（不穿透）", industries: ["ETF"] },
 ];
-const state = { side: "全部", calendarMonth: null };
+const state = { side: "全部", calendarMonth: null, calendarMode: "month" };
 const chartState = { holding: null, frame: 0, drag: null };
 const principles = [
   "股票就是公司的所有权",
@@ -201,6 +201,42 @@ function renderPnlCalendar(performance, snapshotDate) {
   $("#pnl-calendar-prev").disabled = month <= earliestMonth;
   $("#pnl-calendar-next").disabled = month >= latestMonth;
   const total = $("#pnl-calendar-total");
+  const yearMode = state.calendarMode === "year";
+  $("#pnl-calendar-month-mode").setAttribute("aria-pressed", String(!yearMode));
+  $("#pnl-calendar-year-mode").setAttribute("aria-pressed", String(yearMode));
+  if (yearMode) {
+    const year = month.slice(0, 4);
+    const earliestYear = earliestMonth.slice(0, 4);
+    const latestYear = latestMonth.slice(0, 4);
+    const yearEntries = entries.filter((entry) => entry.date.startsWith(year));
+    const yearTotal = yearEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const monthTotals = Array.from({ length: 12 }, (_, index) => {
+      const key = `${year}-${String(index + 1).padStart(2, "0")}`;
+      const monthly = entries.filter((entry) => entry.date.startsWith(key));
+      return { key, amount: monthly.reduce((sum, entry) => sum + entry.amount, 0), days: monthly.length };
+    });
+    $("#pnl-calendar-month").textContent = `${year} 年`;
+    $("#pnl-calendar-prev").disabled = year <= earliestYear;
+    $("#pnl-calendar-next").disabled = year >= latestYear;
+    $("#pnl-calendar-prev").setAttribute("aria-label", "上一年");
+    $("#pnl-calendar-next").setAttribute("aria-label", "下一年");
+    $("#pnl-calendar-total-label").textContent = "年累计";
+    total.textContent = yearEntries.length ? signedMoney(yearTotal) : "—";
+    total.className = yearEntries.length ? pnlClass(yearTotal) : "";
+    $("#pnl-calendar-foot").textContent = "点击月份，查看该月每个交易日的盈亏";
+    root.className = "pnl-year-calendar";
+    root.removeAttribute("role");
+    root.setAttribute("aria-label", `${year} 年十二个月盈亏`);
+    root.innerHTML = monthTotals.map((item, index) => `<button type="button" class="pnl-year-month${item.days ? ` ${pnlClass(item.amount)}` : ""}" data-month="${item.key}" ${item.days ? "" : "disabled"} aria-label="${index + 1} 月${item.days ? `盈亏 ${signedMoney(item.amount)}，查看每日盈亏` : "无记录"}"><span>${index + 1} 月</span><strong>${item.days ? signedMoney(item.amount) : "—"}</strong></button>`).join("");
+    $$(".pnl-year-month:not(:disabled)", root).forEach((button) => button.addEventListener("click", () => {
+      state.calendarMonth = button.dataset.month;
+      state.calendarMode = "month";
+      renderPnlCalendar(performance, snapshotDate);
+    }));
+    return;
+  }
+  $("#pnl-calendar-prev").setAttribute("aria-label", "上个月");
+  $("#pnl-calendar-next").setAttribute("aria-label", "下个月");
   $("#pnl-calendar-total-label").textContent = mixedCoverage ? "分口径月合计" : stockDays ? "股票与 ETF 月累计" : "ETF 月累计";
   total.textContent = byDate.size ? signedMoney(monthlyTotal) : "—";
   total.className = byDate.size ? pnlClass(monthlyTotal) : "";
@@ -221,7 +257,7 @@ function renderPnlCalendar(performance, snapshotDate) {
     cells.push(`<div role="gridcell" class="${isFuture ? "calendar-future" : ""}${isLatest ? " calendar-latest" : ""}" aria-label="${accessibleLabel}"><time datetime="${date}">${day}</time>${amountLabel}</div>`);
   }
   while (cells.length % 5) cells.push('<div class="calendar-empty" aria-hidden="true"></div>');
-  root.classList.add("pnl-calendar");
+  root.className = "pnl-calendar";
   root.setAttribute("role", "grid");
   root.setAttribute("aria-label", `${year} 年 ${monthNumber} 月盈亏日历，周一至周五`);
   const weekdays = ["一", "二", "三", "四", "五"]
@@ -231,7 +267,7 @@ function renderPnlCalendar(performance, snapshotDate) {
 
 function shiftPnlCalendar(offset) {
   const [year, month] = state.calendarMonth.split("-").map(Number);
-  state.calendarMonth = new Date(Date.UTC(year, month - 1 + offset, 1)).toISOString().slice(0, 7);
+  state.calendarMonth = new Date(Date.UTC(year + (state.calendarMode === "year" ? offset : 0), month - 1 + (state.calendarMode === "month" ? offset : 0), 1)).toISOString().slice(0, 7);
   renderPnlCalendar(window.LUMOS_PERFORMANCE, window.LUMOS_PERFORMANCE?.end || data.dataDate);
 }
 
@@ -771,6 +807,8 @@ function setupEvents() {
   window.addEventListener("hashchange", setRoute);
   $("#pnl-calendar-prev").addEventListener("click", () => shiftPnlCalendar(-1));
   $("#pnl-calendar-next").addEventListener("click", () => shiftPnlCalendar(1));
+  $("#pnl-calendar-month-mode").addEventListener("click", () => { state.calendarMode = "month"; renderPnlCalendar(window.LUMOS_PERFORMANCE, window.LUMOS_PERFORMANCE?.end || data.dataDate); });
+  $("#pnl-calendar-year-mode").addEventListener("click", () => { state.calendarMode = "year"; renderPnlCalendar(window.LUMOS_PERFORMANCE, window.LUMOS_PERFORMANCE?.end || data.dataDate); });
   window.addEventListener("resize", alignStructurePanels);
   $("#menu-button").addEventListener("click", () => {
     const open = document.body.classList.toggle("sidebar-open");
