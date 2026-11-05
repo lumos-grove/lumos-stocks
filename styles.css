@@ -639,7 +639,10 @@ main {
   .pnl-calendar span { font-size: 9.5px; letter-spacing: -.025em; }
   .pnl-calendar-foot { margin-left: 2px; font-size: 9px; }
   .paper-panel { padding: 22px 18px; }
-  .allocation-body { grid-template-columns: 116px 1fr; gap: 18px; }
+  .allocation-panel .panel-heading { flex-direction: column; gap: 8px; }
+  .allocation-panel .panel-note { line-height: 1.7; }
+  .allocation-body { grid-template-columns: 1fr; gap: 28px; }
+  .donut-block { justify-self: center; }
   .donut { width: 116px; height: 116px; }
   .donut > div { width: 75px; height: 75px; }
   .donut strong { font-size: 13px; }
