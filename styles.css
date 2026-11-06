@@ -177,6 +177,7 @@ main {
 .hero-stamp time { margin-bottom: 5px; font: italic 14px/1.2 "Bradley Hand", "Snell Roundhand", cursive; letter-spacing: 1px; }
 .hero-stamp strong { z-index: 1; width: max-content; max-width: none; margin: 4px -18px 0; font: 500 29px/1.2 "Kaiti SC", "STKaiti", "KaiTi", serif; text-align: center; white-space: nowrap; }
 .hero-stamp small { z-index: 1; width: max-content; max-width: none; margin: 0 -18px; text-align: center; font: 28px/1.3 "Bradley Hand", "Snell Roundhand", "Kaiti SC", cursive; letter-spacing: -1px; white-space: nowrap; }
+.metric-champion { display: none; }
 
 .overview-summary-grid { display: grid; grid-template-columns: minmax(270px, .85fr) minmax(0, 1.65fr); gap: 24px; margin-bottom: 20px; }
 .metric-grid { display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
@@ -626,10 +627,15 @@ main {
   .hero h1 { font-size: 39px; letter-spacing: 1.5px; }
   .hero-copy { font-size: 13px; }
   .desktop-break { display: none; }
-  .hero-stamp { display: none; }
+  .hero > .hero-stamp { display: none; }
   .metric-grid { grid-template-columns: 1fr; grid-template-rows: repeat(2, auto); }
   .metric { padding: 16px 12px; }
-  .metric:first-child { padding-right: 0; padding-left: 0; }
+  .metric:first-child { padding-right: 106px; padding-left: 0; }
+  .metric-champion { position: absolute; top: 50%; right: 2px; display: flex; flex: none; width: 94px; height: 94px; margin: 0; transform: translateY(-50%) rotate(8deg); }
+  .metric-champion time { margin: 0; font-size: 9px; }
+  .metric-champion small { width: auto; max-width: 84px; margin: 1px 0 0; font-size: 15px; }
+  .metric-champion strong { display: -webkit-box; width: auto; max-width: 84px; margin: 2px 0 0; overflow: hidden; font-size: 13px; line-height: 1.1; white-space: normal; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .metric-champion span { position: static; margin-top: 2px; font-size: 10px; letter-spacing: 2px; transform: none; }
   .metric + .metric { padding-left: 0; border-top: 1px solid var(--line); }
   .metric + .metric::before { display: none; }
   .metric-label { font-size: 11px; }

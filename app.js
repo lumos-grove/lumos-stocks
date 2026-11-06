@@ -124,6 +124,11 @@ function renderOverview() {
         ? `<div class="metric-foot-row"><span class="metric-foot">${item.foot}</span><span class="metric-total" title="股票、ETF 与已清仓 REIT 按交易和到账分红记录计算总盈亏；现价日期见各只持仓。">已记录盈亏 <strong class="${item.totalClass}">${item.total}</strong></span></div>`
         : `<div class="metric-foot">${item.foot}</div>`}
     </article>`).join("");
+  const mobileChampion = $("#daily-champion").cloneNode(true);
+  mobileChampion.removeAttribute("id");
+  mobileChampion.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+  mobileChampion.classList.add("metric-champion");
+  $("#overview-metrics .metric").append(mobileChampion);
   renderPnlCalendar(performance, performance?.end || data.dataDate);
 
   const featuredPct = featuredValue / s.marketTotal * 100;
