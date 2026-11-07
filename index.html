@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=a536a0ef473d">
   <title>Lumos · 投资记录</title>
   <meta name="description" content="Lumos 投资记录：组合、持仓、交易、分红现金流、自选与笔记。">
-  <link rel="stylesheet" href="styles.css?v=960f7a530305">
+  <link rel="stylesheet" href="styles.css?v=648727ea7ea1">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -29,14 +29,6 @@
       <a href="#watchlist" data-route="watchlist"><span class="nav-index">05</span>观察清单<span class="nav-count" id="nav-watchlist-count"></span></a>
       <a href="#notes" data-route="notes"><span class="nav-index">06</span>投资笔记<span class="nav-count" id="nav-note-count"></span></a>
     </nav>
-
-    <div class="sidebar-principle">
-      <span class="eyebrow">MY PRINCIPLE</span>
-      <button class="principle-quote" id="principle-quote" type="button" aria-label="切换投资原则" title="点击切换">
-        <span id="principle-text" aria-live="off"></span>
-      </button>
-      <div class="principle-meta"><span class="principle-line" aria-hidden="true"></span><span id="principle-index">01 / 06</span></div>
-    </div>
 
     <div class="sidebar-foot">
       <span class="status-dot" aria-hidden="true"></span>
@@ -62,6 +54,7 @@
           <div>
             <p class="eyebrow hero-eyebrow">INVESTMENT JOURNAL · SINCE <span id="first-trade-date"></span></p>
             <h1 id="overview-title">组合<span>概览</span></h1>
+            <button class="hero-copy hero-quote" id="hero-quote" type="button" aria-label="切换投资语录" title="点击切换语录"><span id="hero-quote-text">「好公司不一定是好投资，买入价格同样重要」</span><span id="hero-quote-author">—— 霍华德·马克斯（意译）</span></button>
           </div>
           <div class="hero-stamp" id="daily-champion" aria-live="polite">
             <time id="daily-champion-date"></time><small id="daily-champion-pnl">等待行情</small><strong id="daily-champion-name">—</strong><span>今日老大</span>
@@ -254,9 +247,9 @@
     <div id="dialog-content"></div>
   </dialog>
 
-  <script src="data.js?v=04656743b736"></script>
-  <script src="performance-data.js?v=d0bdd2142308"></script>
+  <script src="data.js?v=f1a7a71ebaa5"></script>
+  <script src="performance-data.js?v=b133143b3fb5"></script>
   <script src="notes-data.js?v=39b59fd03bfb"></script>
-  <script src="app.js?v=83242b92c454"></script>
+  <script src="app.js?v=abc4071f494d"></script>
 </body>
 </html>

@@ -102,15 +102,8 @@ button { color: inherit; }
 }
 .nav-list a[aria-current="page"] .nav-coin { color: var(--orange); }
 
-.sidebar-principle { margin-top: auto; padding: 28px 10px; }
+.sidebar-foot { margin-top: auto; }
 .eyebrow { margin: 0 0 9px; color: var(--orange); font: 10px/1.4 var(--mono); letter-spacing: 1.5px; }
-.sidebar-principle .eyebrow { color: #8caa99; font-size: 9px; }
-.principle-quote { display: flex; align-items: flex-start; width: 100%; min-height: 80px; margin: 14px 0 16px; padding: 0; color: inherit; text-align: left; background: transparent; border: 0; cursor: pointer; font: 14px/1.9 var(--sans); }
-.principle-quote span { display: block; transition: opacity .3s ease, transform .3s ease; }
-.principle-quote.is-changing span { opacity: 0; transform: translateY(4px); }
-.principle-line { display: block; width: 32px; height: 1px; background: var(--orange); }
-.principle-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-#principle-index { color: #7f998a; font: 9px var(--mono); letter-spacing: 1px; }
 .sidebar-foot { display: flex; align-items: flex-start; gap: 10px; padding: 18px 10px 0; border-top: 1px solid rgba(220,230,215,.14); color: #bac6bb; font-size: 12px; }
 .sidebar-foot small { display: block; margin-top: 3px; color: #7f998a; font-size: 11px; }
 .status-dot, .snapshot-dot { flex: 0 0 auto; width: 5px; height: 5px; margin-top: 7px; border-radius: 50%; background: #a6ba83; }
@@ -147,7 +140,7 @@ main {
 .view { max-width: 1320px; margin: 0 auto; padding-top: clamp(44px, 6vw, 82px); animation: enter .5s ease both; }
 @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-.hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
+.hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 44px; }
 .hero-eyebrow { margin-bottom: 18px; }
 .hero h1, .page-heading h1 {
   margin: 0;
@@ -156,8 +149,12 @@ main {
 }
 .hero h1 span { position: relative; color: var(--orange); }
 .hero-copy { margin: 18px 0 0; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.hero-quote { display: block; min-height: 20px; margin-top: 8px; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; font-size: 12px; line-height: 1.6; transition: opacity .25s ease; }
+.hero-quote.is-changing { opacity: 0; }
+#hero-quote-author { margin-left: 6px; color: var(--muted); font-size: 11px; }
 .hero-stamp {
   position: relative;
+  align-self: flex-start;
   display: flex;
   flex: 0 0 156px;
   flex-direction: column;
@@ -172,6 +169,7 @@ main {
   outline-offset: -7px;
   box-shadow: 0 0 3px rgba(199, 89, 50, .18), inset 0 0 3px rgba(199, 89, 50, .12);
   transform: rotate(8deg);
+  margin-top: -34px;
 }
 .hero-stamp span { position: absolute; bottom: -29px; left: 50%; transform: translateX(-50%); font: 15px "Kaiti SC", "STKaiti", "KaiTi", serif; letter-spacing: 4px; white-space: nowrap; }
 .hero-stamp time { margin-bottom: 5px; font: italic 14px/1.2 "Bradley Hand", "Snell Roundhand", cursive; letter-spacing: 1px; }
@@ -621,11 +619,13 @@ main {
   .snapshot { font-size: 10px; white-space: nowrap; }
   main { padding: 0 20px; background-size: 52px 52px; }
   .view { padding-top: 38px; }
-  .hero { align-items: flex-start; margin-bottom: 35px; }
+  .hero { align-items: flex-start; margin-bottom: 24px; }
   .hero > div:first-child { min-width: 0; }
   .hero-eyebrow { font-size: 8px; letter-spacing: 1px; white-space: nowrap; }
   .hero h1 { font-size: 39px; letter-spacing: 1.5px; }
   .hero-copy { font-size: 13px; }
+  .hero-quote { font-size: 11px; }
+  #hero-quote-author { display: block; margin: 2px 0 0; font-size: 10px; }
   .desktop-break { display: none; }
   .hero > .hero-stamp { display: none; }
   .metric-grid { grid-template-columns: 1fr; grid-template-rows: repeat(2, auto); }
@@ -707,6 +707,5 @@ main {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .principle-quote span { transition: none; }
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }

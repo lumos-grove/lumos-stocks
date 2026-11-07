@@ -24,42 +24,39 @@ const riskGroups = [
 ];
 const state = { side: "全部", calendarMonth: null, calendarMode: "month" };
 const chartState = { holding: null, frame: 0, drag: null };
-const principles = [
-  "股票就是公司的所有权",
-  "市场先生是来服务你的，不是来指导你的",
-  "便宜是硬道理",
-  "要清楚自己知道什么、不知道什么",
-  "去有鱼的地方钓鱼",
-  "财富的本质是经济体中的购买力占比",
+const heroQuotes = [
+  { text: "股票就是公司的所有权", author: "" },
+  { text: "市场先生是来服务你的，不是来指导你的", author: "" },
+  { text: "便宜是硬道理", author: "" },
+  { text: "要清楚自己知道什么、不知道什么", author: "" },
+  { text: "去有鱼的地方钓鱼", author: "" },
+  { text: "财富的本质是经济体中的购买力占比", author: "" },
+  { text: "好公司不一定是好投资，买入价格同样重要", author: "—— 霍华德·马克斯（意译）" },
+  { text: "后视镜总比挡风玻璃清晰", author: "—— 沃伦·巴菲特（意译）" },
+  { text: "你无法预测，但你可以准备", author: "—— 霍华德·马克斯" },
 ];
 
-function setupPrinciples() {
-  const button = $("#principle-quote");
-  const text = $("#principle-text");
-  let index = Math.floor(Math.random() * principles.length);
-  let timer;
+function setupHeroQuotes() {
+  const button = $("#hero-quote");
+  let index = Math.floor(Math.random() * heroQuotes.length);
+  let pending;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const show = () => {
-    text.textContent = principles[index];
-    $("#principle-index").textContent = `${String(index + 1).padStart(2, "0")} / 06`;
+    const quote = heroQuotes[index];
+    $("#hero-quote-text").textContent = `「${quote.text}」`;
+    $("#hero-quote-author").textContent = quote.author;
   };
   const next = () => {
+    clearTimeout(pending);
     button.classList.add("is-changing");
-    setTimeout(() => {
-      index = (index + 1) % principles.length;
+    pending = setTimeout(() => {
+      index = (index + 1) % heroQuotes.length;
       show();
       button.classList.remove("is-changing");
-    }, reduceMotion.matches ? 0 : 300);
+    }, reduceMotion.matches ? 0 : 250);
   };
-  const restart = () => {
-    clearInterval(timer);
-    if (!reduceMotion.matches) timer = setInterval(next, 8000);
-  };
-  button.addEventListener("click", () => { next(); restart(); });
-  document.addEventListener("visibilitychange", () => document.hidden ? clearInterval(timer) : restart());
-  reduceMotion.addEventListener("change", restart);
+  button.addEventListener("click", next);
   show();
-  restart();
 }
 
 function renderHeader() {
@@ -246,7 +243,7 @@ function renderPnlCalendar(performance, snapshotDate) {
   total.textContent = byDate.size ? signedMoney(monthlyTotal) : "—";
   total.className = byDate.size ? pnlClass(monthlyTotal) : "";
   const coverage = mixedCoverage ? "本月前期仅 ETF，后期计入现持股票" : stockDays ? "现持股票与 ETF" : "仅 ETF";
-  $("#pnl-calendar-foot").textContent = `${byDate.size} 天盈亏记录 · ${coverage} · 按逐笔成交、分红和收盘价计算；已清仓股票及 REIT 仅计入总盈亏`;
+  $("#pnl-calendar-foot").textContent = `${byDate.size} 天浮动记录 · ${coverage} · 按实际成交净额与前复权价格计算，不含分红；已清仓股票及 REIT 仅计入总盈亏`;
 
   const cells = Array.from({ length: mondayOffset }, () => '<div class="calendar-empty" aria-hidden="true"></div>');
   for (let day = 1; day <= daysInMonth; day += 1) {
@@ -860,8 +857,8 @@ function init() {
   renderCashFlow();
   renderWatchlist();
   renderNotes();
+  setupHeroQuotes();
   setupEvents();
-  setupPrinciples();
   window.addEventListener("popstate", setRoute);
   setupChartInteractions();
   setRoute();
