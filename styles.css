@@ -335,6 +335,16 @@ main {
 .holding-monogram { display: grid; flex: 0 0 35px; width: 35px; height: 35px; place-items: center; color: var(--forest); background: #e2e4d7; font: 600 16px var(--serif); }
 .holding-name strong { display: block; font: 600 18px var(--serif); }
 .holding-name small { color: var(--muted); font: 11px var(--mono); }
+.yield-history { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 12px 0; font: 13px var(--numeric); }
+.yield-history > span { white-space: nowrap; }
+.yield-history b { margin-right: 3px; color: var(--muted); font: 11px var(--mono); }
+.yield-history small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.yield-compact { gap: 3px 7px; margin: 6px 0 0; color: var(--forest); font-size: 11px; }
+.yield-compact b { font-size: 10px; }
+.yield-detail { padding: 0 0 20px; border-bottom: 1px solid var(--line); }
+.yield-detail h3 { margin: 0 0 12px; }
+.yield-detail p { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.yield-detail a { color: var(--orange); font-size: 12px; }
 .cell-label { display: none; }
 .cell-value { display: block; font: 500 14px var(--numeric); letter-spacing: -.01em; }
 .cell-sub { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
@@ -430,6 +440,7 @@ main {
 .watch-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .watch-tags span { padding: 3px 8px; color: var(--green); background: #e2e6d9; font-size: 11px; }
 .watch-tags span + span { color: var(--orange); background: var(--orange-soft); }
+.watch-card > .yield-compact { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .watch-card dl { margin: 11px 0 0; }
 .watch-card dl > div { margin-top: 14px; }
 .watch-card dt { color: var(--orange); font-size: 11px; letter-spacing: .5px; }

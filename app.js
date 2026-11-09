@@ -364,6 +364,24 @@ function filteredHoldings() {
     });
 }
 
+function yieldHistory(stock, detailed = false) {
+  const history = stock.historicalYield;
+  const isCost = history?.basisType === "holdingCost";
+  const basis = isCost
+    ? `${stock.assetType === "ETF" ? "当前每份成本（成本总额÷份额）" : "当前摊薄单位成本"} ${number(history.basisValue, stock.assetType === "ETF" ? 6 : 3)} 元`
+    : `${esc(stock.closeDate || "当前")} 收盘价 ${stock.closePrice == null ? "—" : number(stock.closePrice, 2)} 元`;
+  const values = ["2023", "2024", "2025"].map((year) => {
+    const value = history?.yieldPct?.[year];
+    const dps = history?.dps?.[year];
+    return `<span><b>${year}</b> ${value == null ? "—" : `${history?.partialHistory ? "≥" : ""}${number(value, 2)}%`}${detailed && dps != null ? `<small>每${stock.assetType === "ETF" ? "份" : "股"} ${number(dps, 5)} 元</small>` : ""}</span>`;
+  }).join("");
+  if (!detailed) return `<span class="yield-history yield-compact" aria-label="2023至2025年按${isCost ? "持仓成本" : "收盘价"}计算的税前股息率${history?.partialHistory ? "，ETF已核记录为下限" : ""}">${values}</span>`;
+  return `<section class="yield-detail"><h3>过去三年股息率</h3><div class="yield-history">${values}</div>
+    <p>按各归属年度已实施的税前派息 ÷ ${basis} 计算。${isCost ? "成本包含历史买卖与分红的摊薄影响，仅表示按当前成本看。" : ""}— 表示缺少已核实数据；0% 表示有明确未分红依据。${stock.assetType === "ETF" ? "ETF 仅展示已收集的派息，历史记录可能不完整。" : "历史分红不代表未来分红。"}</p>
+    ${history?.source ? `<a href="${esc(history.source)}" target="_blank" rel="noopener noreferrer">查看派息数据来源 ↗</a>` : ""}
+    ${history?.zeroSource ? ` · <a href="${esc(history.zeroSource)}" target="_blank" rel="noopener noreferrer">查看未分红依据 ↗</a>` : ""}</section>`;
+}
+
 function renderHoldings() {
   const holdings = filteredHoldings();
   $("#holding-result-count").textContent = `显示 ${holdings.length} / ${data.holdings.length} 只持仓`;
@@ -372,7 +390,7 @@ function renderHoldings() {
     const market = holding.shares * holding.closePrice;
     const isEtf = holding.assetType === "ETF";
     return `<button class="holding-row" data-code="${holding.code}" style="--i:${index}" aria-label="查看 ${esc(holding.name)} 持仓详情">
-      <span class="holding-name"><i class="holding-monogram">${esc(holding.name.slice(0, 1))}</i><span><strong>${esc(holding.name)}</strong><small>${holding.code} · ${esc(holding.industry)}</small></span></span>
+      <span class="holding-name"><i class="holding-monogram">${esc(holding.name.slice(0, 1))}</i><span><strong>${esc(holding.name)}</strong><small>${holding.code} · ${esc(holding.industry)}</small>${yieldHistory(holding)}</span></span>
       <span><span class="cell-label">持有</span><span class="cell-value">${holding.shares} ${isEtf ? "份" : "股"}</span><span class="cell-sub">${isEtf ? esc(holding.industryDetail) : `持有 ${holding.holdDays} 天`}</span></span>
       <span><span class="cell-label">成本 / 现价</span><span class="cell-value">${number(holding.unitCost, 3)} / ${number(holding.closePrice, isEtf ? 3 : 2)}</span><span class="cell-sub">${holding.closeDate} ${isEtf && !holding.klineDate ? "持仓截图" : "收盘"}</span></span>
       <span><span class="cell-label">持仓市值</span><span class="cell-value">${money(market)}</span><span class="cell-sub">成本 ${money(cost)}</span></span>
@@ -417,6 +435,7 @@ function openHolding(code) {
       <div><dt>浮动盈亏</dt><dd class="${pnlClass(holding.pnl)}">${signed(holding.pnlPct)}%</dd></div>
     </dl>
     <div class="dialog-body">
+      ${yieldHistory(holding, true)}
       ${isEtf ? `<p class="dialog-disclaimer etf-disclaimer">当前持仓成本以券商快照为准；历史买卖及到账分红已按对账单计入组合总盈亏。</p>${holding.klines.length ? priceChart(holding) : ""}` : `
       <h3>买入理由</h3><p class="dialog-reason">${esc(holding.reason || "未记录买入理由")}</p>
       <p class="dialog-profile">${esc(holding.profile || "尚未记录公司概况")}</p>
@@ -648,6 +667,7 @@ function renderWatchlist() {
         <article class="watch-card">
           <div class="watch-card-top"><div><h3>${esc(stock.name)}</h3><code>${esc(stock.code)}</code></div><div class="watch-price">${stock.closePrice == null ? "暂无" : number(stock.closePrice)}<small>${esc(stock.closeDate || "暂无行情")}</small></div></div>
           <div class="watch-tags"><span>${esc(stock.industry || "未分类")}</span><span>${esc(stock.group || "待核实")}</span></div>
+          ${yieldHistory(stock)}
           <dl>
             <div><dt>纳入原因</dt><dd>${esc(stock.note || "未记录")}</dd></div>
             <div><dt>买入资格</dt><dd>${esc(watchEligibility(stock))}</dd></div>
@@ -672,7 +692,7 @@ function openWatchChart(code) {
   if (!stock) return;
   $("#dialog-content").innerHTML = `
     <div class="dialog-hero"><p class="eyebrow">观察清单 · ${esc(stock.pool)} · ${esc(stock.industry)}</p><h2 id="dialog-title">${esc(stock.name)}<small>${esc(stock.code)}</small></h2><p>收盘价 ${stock.closePrice == null ? "暂无" : number(stock.closePrice)} · ${esc(stock.closeDate || "暂无行情")}</p></div>
-    <div class="dialog-body watch-dialog-body">${priceChart(stock)}<p class="dialog-disclaimer">日 K 线为不复权收盘数据，仅供查看历史价格。</p></div>`;
+    <div class="dialog-body watch-dialog-body">${yieldHistory(stock, true)}${priceChart(stock)}<p class="dialog-disclaimer">日 K 线为不复权收盘数据，仅供查看历史价格。</p></div>`;
   chartState.holding = stock;
   $("#holding-dialog").showModal();
   requestAnimationFrame(() => {
