@@ -243,7 +243,10 @@ function renderPnlCalendar(performance, snapshotDate) {
   total.textContent = byDate.size ? signedMoney(monthlyTotal) : "—";
   total.className = byDate.size ? pnlClass(monthlyTotal) : "";
   const coverage = mixedCoverage ? "本月前期仅 ETF，后期计入现持股票" : stockDays ? "现持股票与 ETF" : "仅 ETF";
-  $("#pnl-calendar-foot").textContent = `${byDate.size} 天浮动记录 · ${coverage} · 按实际成交净额与前复权价格计算，不含分红；已清仓股票及 REIT 仅计入总盈亏`;
+  const latestEntry = byDate.get(snapshotDate);
+  const breakdown = latestEntry?.stockAmount !== undefined
+    ? `最新交易日：股票 ${signedMoney(latestEntry.stockAmount)}，ETF ${signedMoney(latestEntry.etfAmount)}，合计 ${signedMoney(latestEntry.amount)}。` : "";
+  $("#pnl-calendar-foot").textContent = `${breakdown}${byDate.size} 天浮动记录 · ${coverage} · 按实际成交净额与前复权价格计算，不含分红；已清仓股票及 REIT 仅计入总盈亏`;
 
   const cells = Array.from({ length: mondayOffset }, () => '<div class="calendar-empty" aria-hidden="true"></div>');
   for (let day = 1; day <= daysInMonth; day += 1) {
@@ -256,7 +259,8 @@ function renderPnlCalendar(performance, snapshotDate) {
     const amount = entry?.amount;
     const amountLabel = amount === undefined ? "" : `<span class="${pnlClass(amount)}">${signedMoney(amount)}</span>`;
     const accessibleLabel = `${date}${isLatest ? "，最新收盘" : ""}${amount === undefined ? "" : `，${entry.stockIncluded ? "现持股票与 ETF" : "仅 ETF"}盈亏 ${signedMoney(amount)}`}`;
-    cells.push(`<div role="gridcell" class="${isFuture ? "calendar-future" : ""}${isLatest ? " calendar-latest" : ""}" aria-label="${accessibleLabel}"><time datetime="${date}">${day}</time>${amountLabel}</div>`);
+    const detail = entry?.stockAmount !== undefined ? `股票 ${signedMoney(entry.stockAmount)} · ETF ${signedMoney(entry.etfAmount)}` : "";
+    cells.push(`<div role="gridcell" class="${isFuture ? "calendar-future" : ""}${isLatest ? " calendar-latest" : ""}" aria-label="${accessibleLabel}${detail ? `，${detail}` : ""}" title="${detail}"><time datetime="${date}">${day}</time>${amountLabel}</div>`);
   }
   while (cells.length % 5) cells.push('<div class="calendar-empty" aria-hidden="true"></div>');
   root.className = "pnl-calendar";
