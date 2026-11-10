@@ -78,6 +78,7 @@ function renderOverview() {
   const performance = window.LUMOS_PERFORMANCE;
   const champion = performance?.dailyChampion;
   if (champion) {
+    $("#daily-champion").classList.add(pnlClass(champion.amount));
     $("#daily-champion-name").textContent = champion.name;
     $("#daily-champion-pnl").textContent = `${champion.amount >= 0 ? "+" : "−"}${number(Math.abs(champion.amount))}`;
     $("#daily-champion-date").textContent = champion.date.slice(5).replace("-", "/");

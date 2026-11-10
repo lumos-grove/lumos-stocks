@@ -175,6 +175,7 @@ main {
 .hero-stamp time { margin-bottom: 5px; font: italic 14px/1.2 "Bradley Hand", "Snell Roundhand", cursive; letter-spacing: 1px; }
 .hero-stamp strong { z-index: 1; width: max-content; max-width: none; margin: 4px -18px 0; font: 500 29px/1.2 "Kaiti SC", "STKaiti", "KaiTi", serif; text-align: center; white-space: nowrap; }
 .hero-stamp small { z-index: 1; width: max-content; max-width: none; margin: 0 -18px; text-align: center; font: 28px/1.3 "Bradley Hand", "Snell Roundhand", "Kaiti SC", cursive; letter-spacing: -1px; white-space: nowrap; }
+.hero-stamp.negative { color: var(--green); border-color: rgba(49, 107, 87, .28); outline-color: rgba(49, 107, 87, .22); box-shadow: 0 0 3px rgba(49, 107, 87, .18), inset 0 0 3px rgba(49, 107, 87, .12); }
 .metric-champion { display: none; }
 
 .overview-summary-grid { display: grid; grid-template-columns: minmax(270px, .85fr) minmax(0, 1.65fr); gap: 24px; margin-bottom: 20px; }
