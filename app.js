@@ -713,7 +713,7 @@ function renderNotes() {
   $("#notes-list").innerHTML = posts.length ? posts.map((post) => `
     <button class="note-card" type="button" data-note="${esc(post.id)}">
       <span class="note-card-meta"><span>${esc(post.category)}</span><time datetime="${esc(post.date)}">${esc(post.date)}</time></span>
-      <h2>${esc(post.title)}</h2>
+      <h2>${esc(post.title).replace(/——(.+)$/, '<span class="note-title-suffix">——$1</span>')}</h2>
       <p class="note-card-subtitle">${esc(post.subtitle || post.excerpt)}</p>
       <span class="note-read">阅读全文 <span aria-hidden="true">↗</span></span>
     </button>`).join("") : emptyState("暂无投资笔记", "当前页面数据中还没有已发布的笔记。");

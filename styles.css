@@ -454,6 +454,7 @@ main {
 .note-card-meta { display: flex; justify-content: space-between; color: var(--orange); font: 11px var(--mono); letter-spacing: .04em; }
 .note-card-meta time { color: var(--muted); }
 .note-card h2 { max-width: 850px; margin: 14px 0 0; font: 600 clamp(23px, 2.2vw, 29px)/1.5 var(--serif); letter-spacing: .02em; }
+.note-card .note-title-suffix { display: inline-block; font-size: .65em; font-weight: 400; color: var(--muted); }
 .note-card p { color: var(--muted); }
 .note-card .note-card-subtitle { margin: 5px 0 0; font-size: 14px; }
 .note-card .note-read { display: inline-block; margin-top: 14px; }
