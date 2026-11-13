@@ -743,7 +743,7 @@ function renderCashFlow() {
       <div class="cashflow-card-top"><div><span class="eyebrow">${esc(item.period)}</span><h3>${esc(item.name)}</h3><small>${esc(item.code)}</small></div><strong>${money(item.grossIfHeld)}</strong></div>
       <p class="cashflow-card-formula">${number(item.shares, 0)} ${item.unit} × ${number(item.dps, 4)} 元/${item.unit} · 税前条件估算</p>
       <p class="cashflow-card-stage">${esc(item.stage)}</p>
-      <div class="cashflow-card-dates"><span>公告 ${esc(item.announcedDate)}</span><span>登记 ${esc(item.recordDate || "待公布")}</span><span>除息/发放 ${esc(item.exDate || "待公布")}</span></div>
+      <div class="cashflow-card-dates"><span>公告 ${esc(item.announcedDate)}</span><span>登记 ${esc(item.recordDate || "待公布")}</span><span>除息 ${esc(item.exDate || "待公布")}</span><span>发放 ${esc(item.payDate || "待公布")}</span></div>
       <a href="${esc(item.source)}" target="_blank" rel="noopener noreferrer">查看公告来源 ↗</a>
     </article>`).join("") : emptyState("暂无待到账公告", "后续公布的分红会在核对后列入这里。");
 
