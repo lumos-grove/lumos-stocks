@@ -27,7 +27,7 @@
 
 FCFF 是供全部资本提供者使用、未扣融资利息及借款本金的现金流；FCFE 已考虑股东承担的融资现金流。**不得用 EV 配归母 FCFE，也不得用普通股市值配全额合并 FCFF。**
 
-前置资料：读 [维护手册](<docs/00-maintenance-guide.md>)、[投资规则](<docs/05-investment-rules.md>)、[方法库索引](<docs/valuation-methods/00-valuation-methods-index.md>)和[个股分析执行标准](<docs/valuation-methods/01-methods/equity-analysis-execution-standard.md>)。本手册细化本项核算，不替代完整个股研究。
+前置资料：读 [维护手册](<docs/00-维护手册.md>)、[投资规则](<docs/05-投资规则.md>)、[方法库索引](<docs/valuation-methods/00-估值方法库索引.md>)和[个股分析执行标准](<docs/valuation-methods/01-methods/个股分析执行标准.md>)。本手册细化本项核算，不替代完整个股研究。
 
 银行、保险、券商通常转行业专用框架；纯投资控股无独立经营现金流时转 NAV；有限经营期限必须披露期限。周期行业可核算，但需正常化，不能直接用高点倍数下结论。
 
@@ -296,9 +296,9 @@ FCFF = 8+2−0.5 = 9.5
 失效条件 / 下次复核触发：
 ```
 
-完整个股研究另按[执行标准](<docs/valuation-methods/01-methods/equity-analysis-execution-standard.md>)逐项检查四套方法及其验证报告，不能拿本项替代。纯教学说明不虚构 ROE、股息或公司输入来凑四法结果。
+完整个股研究另按[执行标准](<docs/valuation-methods/01-methods/个股分析执行标准.md>)逐项检查四套方法及其验证报告，不能拿本项替代。纯教学说明不虚构 ROE、股息或公司输入来凑四法结果。
 
-[净现金PE验证报告](<docs/valuation-methods/02-validation-and-limits/net-cash-pe-validation.md>)检验的是其指定净利润分母版本，不等于验证或否定本手册所有 FCFF 流程。[投资规则](<docs/05-investment-rules.md>)仍是交易纪律唯一出处；本手册不新增买入阈值，也不因研究改池名单或持仓。
+[净现金PE验证报告](<docs/valuation-methods/02-validation-and-limits/净现金PE验证.md>)检验的是其指定净利润分母版本，不等于验证或否定本手册所有 FCFF 流程。[投资规则](<docs/05-投资规则.md>)仍是交易纪律唯一出处；本手册不新增买入阈值，也不因研究改池名单或持仓。
 
 ## 10. 本次修订纠错记录
 
