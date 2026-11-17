@@ -363,9 +363,9 @@ function filteredHoldings() {
     .filter((holding) => !query || `${holding.name}${holding.code}`.toLowerCase().includes(query))
     .filter((holding) => industry === "all" || holding.industry === industry)
     .sort((a, b) => {
-      if (sort === "pnl") return b.pnl - a.pnl;
-      if (sort === "recent") return (b.firstBuy || "").localeCompare(a.firstBuy || "");
-      return (b.costTotal ?? b.shares * b.unitCost) - (a.costTotal ?? a.shares * a.unitCost);
+      if (sort === "pnlPct") return b.pnlPct - a.pnlPct;
+      if (sort === "shares") return b.shares - a.shares;
+      return b.shares * b.closePrice - a.shares * a.closePrice;
     });
 }
 
