@@ -149,10 +149,12 @@ function renderOverview() {
   });
   $("#holding-donut").style.background = `conic-gradient(${stops.join(",")})`;
   $("#allocation-legend").innerHTML = slices.map((item, index) => `
-    <li><i style="background:${sliceColors[index]}"></i><span>${esc(item.name)}</span><strong>${number(item.value / s.marketTotal * 100)}%</strong><small>${money(item.value, 0)}</small></li>`).join("");
+    <li><i style="background:${sliceColors[index]}"></i><span title="${esc(item.name)}">${esc(item.name)}</span><strong>${number(item.value / s.marketTotal * 100)}%</strong><small>${money(item.value, 0)}</small></li>`).join("");
 
   if (performance) {
     $("#return-total").textContent = `${signed(performance.totalReturn)}%`;
+    const benchmark = performance.series?.at(-1)?.benchmark;
+    $("#return-benchmark").textContent = Number.isFinite(benchmark) ? `${signed(benchmark)}%` : "—";
     $("#return-range").textContent = `${performance.start} — ${performance.end}`;
   }
 
@@ -299,7 +301,7 @@ function drawReturnChart() {
   const pad = { left: 12, right: 44, top: 18, bottom: 28 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
-  const values = series.map((point) => point.r);
+  const values = series.flatMap(({r, benchmark}) => Number.isFinite(benchmark) ? [r, benchmark] : [r]);
   const min = Math.min(0, Math.floor(Math.min(...values) / 5) * 5);
   const max = Math.max(5, Math.ceil(Math.max(...values) / 5) * 5);
   const x = (index) => pad.left + index / Math.max(1, series.length - 1) * plotW;
@@ -327,6 +329,29 @@ function drawReturnChart() {
   area.closePath();
   ctx.fillStyle = "rgba(169,196,174,.08)";
   ctx.fill(area);
+  ctx.strokeStyle = "#dfb979";
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  let benchmarkStarted = false;
+  series.forEach((point, index) => {
+    if (!Number.isFinite(point.benchmark)) {
+      benchmarkStarted = false;
+      return;
+    }
+    if (benchmarkStarted) ctx.lineTo(x(index), y(point.benchmark));
+    else ctx.moveTo(x(index), y(point.benchmark));
+    benchmarkStarted = true;
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const benchmark = series.at(-1).benchmark;
+  if (Number.isFinite(benchmark)) {
+    ctx.fillStyle = "#dfb979";
+    ctx.beginPath();
+    ctx.arc(x(series.length - 1), y(benchmark), 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.strokeStyle = "#b6cbb7";
   ctx.lineWidth = 1.8;
   ctx.beginPath();

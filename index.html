@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=a536a0ef473d">
   <title>Lumos · 投资记录</title>
   <meta name="description" content="Lumos 投资记录：组合、持仓、交易、分红现金流、自选与笔记。">
-  <link rel="stylesheet" href="styles.css?v=a20a6aa3e670">
+  <link rel="stylesheet" href="styles.css?v=521a5f6099ba">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -105,10 +105,13 @@
               <div><p class="eyebrow">PERFORMANCE</p><h2>股票收益曲线</h2></div>
               <span class="small-sun" aria-hidden="true">✳</span>
             </div>
-            <div class="return-summary"><div><span>按累计净投入估算</span><strong id="return-total"></strong></div></div>
-            <div class="return-chart-wrap"><canvas id="return-chart" role="img" aria-label="今年按累计净投入估算的股票收益率曲线"></canvas></div>
+            <div class="return-summary">
+              <div><span class="return-key return-key-stock">股票收益率</span><strong id="return-total"></strong></div>
+              <div><span class="return-key return-key-index">上证指数</span><strong id="return-benchmark"></strong></div>
+            </div>
+            <div class="return-chart-wrap"><canvas id="return-chart" role="img" aria-label="股票收益率和上证指数同期涨跌幅"></canvas></div>
             <div class="return-chart-foot"><span id="return-range"></span><span>仅股票 · 不含闲置现金</span></div>
-            <p class="method-note">股票收益曲线仅计现持股票；收益日历自 2025-05-30 计入 ETF，2026-03-23 起同时计入现持股票。已清仓股票与 REIT 仅计入上方总盈亏。</p>
+            <p class="method-note">股票收益率按累计净投入估算。上证指数以曲线首日收盘价为基准。</p>
           </article>
         </div>
 
@@ -249,8 +252,8 @@
   </dialog>
 
   <script src="data.js?v=507edd136ed5"></script>
-  <script src="performance-data.js?v=d08379b6ffd6"></script>
+  <script src="performance-data.js?v=842a4d87b147"></script>
   <script src="notes-data.js?v=65dea4dec8e7"></script>
-  <script src="app.js?v=c1ebc9cd7da8"></script>
+  <script src="app.js?v=43a6443cfe2f"></script>
 </body>
 </html>
