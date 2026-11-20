@@ -294,14 +294,15 @@ function drawReturnChart() {
   ctx.scale(scale, scale);
   const css = getComputedStyle(document.documentElement);
   const color = (name) => css.getPropertyValue(name).trim();
-  const series = performance.series;
+  const series = performance.series || [];
+  if (!series.length) return;
   const pad = { left: 12, right: 44, top: 18, bottom: 28 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
   const values = series.map((point) => point.r);
   const min = Math.min(0, Math.floor(Math.min(...values) / 5) * 5);
   const max = Math.max(5, Math.ceil(Math.max(...values) / 5) * 5);
-  const x = (index) => pad.left + index / (series.length - 1) * plotW;
+  const x = (index) => pad.left + index / Math.max(1, series.length - 1) * plotW;
   const y = (value) => pad.top + (max - value) / (max - min) * plotH;
   ctx.font = "10px Menlo, monospace";
   ctx.lineWidth = 1;
@@ -388,22 +389,41 @@ function yieldHistory(stock, detailed = false) {
 }
 
 function renderHoldings() {
+  const daily = window.LUMOS_PERFORMANCE?.dailyPnl;
+  const dailyPanel = $("#holding-daily-pnl");
+  if (daily?.date && Number.isFinite(daily.amount)) {
+    const value = (amount, included = true) => included && Number.isFinite(amount)
+      ? `<strong class="${pnlClass(amount)}">${signedMoney(amount)}</strong>`
+      : `<strong>—</strong>`;
+    dailyPanel.innerHTML = `<div class="holding-daily-heading"><h2>最新交易日盈亏</h2><time datetime="${esc(daily.date)}">${esc(daily.date)}</time></div>
+      <div class="holding-daily-values">
+        <div><span>合计</span>${value(daily.amount)}</div>
+        <div><span>股票</span>${value(daily.stockAmount, daily.stockIncluded)}</div>
+        <div><span>ETF</span>${value(daily.etfAmount, daily.etfIncluded)}</div>
+      </div>
+      <p>全部持仓口径，不随筛选变化；与收益日历一致，计入当日成交费用，不另加到账分红。${daily.date !== data.dataDate ? "收益日期与行情日期不同，请以各自标注日期为准。" : ""}</p>`;
+  } else {
+    dailyPanel.innerHTML = `<div class="holding-daily-heading"><h2>最新交易日盈亏</h2></div><p>暂无可核算的交易日盈亏数据。</p>`;
+  }
   const holdings = filteredHoldings();
   $("#holding-result-count").textContent = `显示 ${holdings.length} / ${data.holdings.length} 只持仓`;
   const holdingRow = (holding, index) => {
     const cost = holding.costTotal ?? holding.shares * holding.unitCost;
     const market = holding.shares * holding.closePrice;
     const isEtf = holding.assetType === "ETF";
+    const day = window.LUMOS_PERFORMANCE?.holdingDailyPnl?.[holding.code];
+    const hasDay = day?.date && Number.isFinite(day.amount);
     return `<button class="holding-row" data-code="${holding.code}" style="--i:${index}" aria-label="查看 ${esc(holding.name)} 持仓详情">
       <span class="holding-name"><i class="holding-monogram">${esc(holding.name.slice(0, 1))}</i><span><strong>${esc(holding.name)}</strong><small>${holding.code} · ${esc(holding.industry)}</small>${yieldHistory(holding)}</span></span>
       <span><span class="cell-label">持有</span><span class="cell-value">${holding.shares} ${isEtf ? "份" : "股"}</span><span class="cell-sub">${isEtf ? esc(holding.industryDetail) : `持有 ${holding.holdDays} 天`}</span></span>
       <span><span class="cell-label">成本 / 现价</span><span class="cell-value">${number(holding.unitCost, 3)} / ${number(holding.closePrice, isEtf ? 3 : 2)}</span><span class="cell-sub">${holding.closeDate} ${isEtf && !holding.klineDate ? "持仓截图" : "收盘"}</span></span>
       <span><span class="cell-label">持仓市值</span><span class="cell-value">${money(market)}</span><span class="cell-sub">成本 ${money(cost)}</span></span>
       <span class="${pnlClass(holding.pnl)}"><span class="cell-label">浮动盈亏</span><span class="cell-value">${signed(holding.pnl)}</span><span class="cell-sub">${signed(holding.pnlPct)}%</span></span>
+      <span class="holding-day-pnl ${hasDay ? pnlClass(day.amount) : ""}"><span class="cell-label">最新交易日盈亏</span><span class="cell-value">${hasDay ? signedMoney(day.amount) : "—"}</span><span class="cell-sub">${hasDay ? esc(day.date) : "暂无数据"}</span></span>
       <span class="holding-arrow" aria-hidden="true">↗</span>
     </button>`;
   };
-  const tableHead = `<div class="holdings-table-head" aria-hidden="true"><span>标的 / 分类</span><span>持有</span><span>成本 / 现价</span><span>持仓市值</span><span>浮动盈亏</span><span></span></div>`;
+  const tableHead = `<div class="holdings-table-head" aria-hidden="true"><span>标的 / 分类</span><span>持有</span><span>成本 / 现价</span><span>持仓市值</span><span>浮动盈亏</span><span>最新交易日盈亏</span><span></span></div>`;
   const groups = [
     { title: "股票", items: holdings.filter((holding) => holding.assetType !== "ETF") },
     { title: "ETF", items: holdings.filter((holding) => holding.assetType === "ETF") },
