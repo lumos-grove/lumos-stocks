@@ -756,16 +756,12 @@ function openWatchChart(code) {
 function renderNotes() {
   const posts = window.LUMOS_NOTES || [];
   $("#notes-list").innerHTML = posts.length ? posts.map((post) => `
-    <button class="note-card" type="button" data-note="${esc(post.id)}">
+    <a class="note-card" href="#notes/${esc(post.id)}">
       <span class="note-card-meta"><span>${esc(post.category)}</span><time datetime="${esc(post.date)}">${esc(post.date)}</time></span>
       <h2>${esc(post.title).replace(/——(.+)$/, '<span class="note-title-suffix">——$1</span>')}</h2>
       <p class="note-card-subtitle">${esc(post.subtitle || post.excerpt)}</p>
       <span class="note-read">阅读全文 <span aria-hidden="true">↗</span></span>
-    </button>`).join("") : emptyState("暂无投资笔记", "当前页面数据中还没有已发布的笔记。");
-  $$("[data-note]").forEach((button) => button.addEventListener("click", () => {
-    history.pushState(null, "", `#notes/${button.dataset.note}`);
-    setRoute();
-  }));
+    </a>`).join("") : emptyState("暂无投资笔记", "当前页面数据中还没有已发布的笔记。");
 }
 
 function renderCashFlow() {
@@ -827,7 +823,7 @@ function showNote(id) {
   $("#notes-list").hidden = true;
   $("#note-reader").hidden = false;
   $("#note-reader").innerHTML = `
-    <button class="note-back" type="button">← 返回笔记列表</button>
+    <a class="note-back" href="#notes">← 返回笔记列表</a>
     <header class="note-reader-head">
       <p class="eyebrow">${esc(post.category)} · ${esc(post.date)}</p>
       <h2>${esc(post.title)}</h2>
@@ -835,10 +831,6 @@ function showNote(id) {
     </header>
     ${post.attachment ? `<aside class="note-attachment"><div><span class="eyebrow">RESEARCH TOOL</span><strong>${esc(post.attachment.title)}</strong><p>${esc(post.attachment.description)}</p></div><a href="${esc(post.attachment.href)}" download="${esc(post.attachment.filename)}">下载 Markdown <span aria-hidden="true">↓</span></a></aside>` : ""}
     <div class="note-reader-body">${post.body}</div>`;
-  $(".note-back").addEventListener("click", () => {
-    history.pushState(null, "", "#notes");
-    setRoute();
-  });
   return true;
 }
 

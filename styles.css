@@ -482,7 +482,7 @@ main {
 .watch-chart-button:hover { text-decoration: underline; }
 .watch-chart-button span { margin-left: 6px; }
 .watch-dialog-body { padding-top: 12px; }
-.note-card { display: block; width: 100%; padding: 32px 0; color: inherit; text-align: left; background: transparent; border: 0; border-top: 1px solid var(--ink); cursor: pointer; }
+.note-card { display: block; width: 100%; padding: 32px 0; color: inherit; text-decoration: none; border-top: 1px solid var(--ink); }
 .note-card-meta { display: flex; justify-content: space-between; color: var(--orange); font: 11px var(--mono); letter-spacing: .04em; }
 .note-card-meta time { color: var(--muted); }
 .note-card h2 { max-width: 850px; margin: 14px 0 0; font: 600 clamp(23px, 2.2vw, 29px)/1.5 var(--serif); letter-spacing: .02em; }
@@ -492,7 +492,7 @@ main {
 .note-card .note-read { display: inline-block; margin-top: 14px; }
 .note-read { color: var(--orange); font-size: 13px; }
 .note-read span { margin-left: 10px; }
-.note-back { padding: 0 0 18px; color: var(--muted); background: transparent; border: 0; cursor: pointer; font-size: 13px; }
+.note-back { display: inline-block; padding-bottom: 18px; color: var(--muted); font-size: 13px; text-decoration: none; }
 .note-back:hover { color: var(--orange); }
 .note-reader-head { padding: 22px 0 28px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
 .note-reader-head h2 { max-width: 1000px; margin: 14px 0 8px; font: 600 clamp(26px, 2.8vw, 35px)/1.5 var(--serif); letter-spacing: .015em; }
