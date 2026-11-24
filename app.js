@@ -385,13 +385,24 @@ function filteredHoldings() {
   const query = $("#holding-search").value.trim().toLowerCase();
   const industry = $("#industry-filter").value;
   const sort = $("#holding-sort").value;
+  const direction = $("#holding-sort-direction").value === "asc" ? 1 : -1;
+  const sortValue = (holding) => {
+    if (sort === "dailyPnl") {
+      const day = window.LUMOS_PERFORMANCE?.holdingDailyPnl?.[holding.code];
+      return day?.date && Number.isFinite(day.amount) ? day.amount : null;
+    }
+    if (sort === "pnlPct") return holding.pnlPct;
+    if (sort === "shares") return holding.shares;
+    return holding.shares * holding.closePrice;
+  };
   return data.holdings
     .filter((holding) => !query || `${holding.name}${holding.code}`.toLowerCase().includes(query))
     .filter((holding) => industry === "all" || holding.industry === industry)
     .sort((a, b) => {
-      if (sort === "pnlPct") return b.pnlPct - a.pnlPct;
-      if (sort === "shares") return b.shares - a.shares;
-      return b.shares * b.closePrice - a.shares * a.closePrice;
+      const left = sortValue(a), right = sortValue(b);
+      if (!Number.isFinite(left)) return Number.isFinite(right) ? 1 : 0;
+      if (!Number.isFinite(right)) return -1;
+      return direction * (left - right);
     });
 }
 
@@ -882,6 +893,7 @@ function setupEvents() {
   $("#holding-search").addEventListener("input", renderHoldings);
   $("#industry-filter").addEventListener("change", renderHoldings);
   $("#holding-sort").addEventListener("change", renderHoldings);
+  $("#holding-sort-direction").addEventListener("change", renderHoldings);
   $("#trade-search").addEventListener("input", renderTrades);
   $$("#trade-filters button").forEach((button) => button.addEventListener("click", () => {
     state.side = button.dataset.side;

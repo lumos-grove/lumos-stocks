@@ -333,13 +333,13 @@ main {
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
 .page-heading h1 { font-size: clamp(36px, 4vw, 50px); }
 .page-heading > p { margin: 0 0 5px; color: var(--muted); font-size: 13px; line-height: 1.8; }
-.toolbar { display: flex; align-items: center; gap: 12px; padding: 15px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 15px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
 .search-box { display: flex; align-items: center; gap: 8px; min-width: 210px; padding: 8px 12px; background: var(--paper-light); border: 1px solid var(--line); }
 .search-box > span { color: var(--muted); font-size: 20px; line-height: 1; }
 .search-box input { width: 100%; min-width: 0; padding: 0; color: var(--ink); background: transparent; border: 0; outline: none; font-size: 13px; }
 .search-box:focus-within { border-color: var(--forest-light); }
 .select-box { display: flex; align-items: center; gap: 7px; padding: 0 10px; background: var(--paper-light); border: 1px solid var(--line); }
-.select-box > span { color: var(--muted); font-size: 12px; }
+.select-box > span { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .select-box select { height: 37px; padding: 0 20px 0 0; color: var(--ink); background: transparent; border: 0; outline: none; font-size: 13px; }
 .result-line { display: flex; justify-content: space-between; margin: 16px 0 12px; color: var(--muted); font-size: 11px; }
 .holding-group + .holding-group { margin-top: 42px; }

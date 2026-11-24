@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=a536a0ef473d">
   <title>Lumos · 投资记录</title>
   <meta name="description" content="Lumos 投资记录：组合、持仓、交易、分红现金流、自选与笔记。">
-  <link rel="stylesheet" href="styles.css?v=31bc7d55a11c">
+  <link rel="stylesheet" href="styles.css?v=7592233bd4ed">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -153,7 +153,8 @@
         <div class="toolbar">
           <label class="search-box"><span aria-hidden="true">⌕</span><input id="holding-search" type="search" placeholder="搜索名称或代码" aria-label="搜索持仓"></label>
           <label class="select-box"><span>行业</span><select id="industry-filter" aria-label="按行业筛选"><option value="all">全部行业</option></select></label>
-          <label class="select-box"><span>排序</span><select id="holding-sort" aria-label="持仓排序"><option value="market">按持仓金额</option><option value="pnlPct">按盈亏比例</option><option value="shares">按持仓数量</option></select></label>
+          <label class="select-box"><span>排序</span><select id="holding-sort" aria-label="持仓排序"><option value="market">按持仓金额</option><option value="pnlPct">按盈亏比例</option><option value="shares">按持仓数量</option><option value="dailyPnl">按最新交易日盈亏</option></select></label>
+          <label class="select-box"><span>顺序</span><select id="holding-sort-direction" aria-label="持仓排序顺序"><option value="desc">从大到小</option><option value="asc">从小到大</option></select></label>
         </div>
         <div class="result-line"><span id="holding-result-count"></span><span>单位：人民币</span></div>
         <div class="holdings-table-wrap">
@@ -251,9 +252,9 @@
     <div id="dialog-content"></div>
   </dialog>
 
-  <script src="data.js?v=62641cb2c320"></script>
-  <script src="performance-data.js?v=c07d812bdff4"></script>
+  <script src="data.js?v=b5316ee4e18f"></script>
+  <script src="performance-data.js?v=f1af512188b4"></script>
   <script src="notes-data.js?v=32137b585c21"></script>
-  <script src="app.js?v=5bc4a377d9b7"></script>
+  <script src="app.js?v=049d7e359bf5"></script>
 </body>
 </html>
