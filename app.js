@@ -8,8 +8,8 @@ const signed = (value, digits = 2) => `${value >= 0 ? "+" : ""}${number(value, d
 const pnlClass = (value) => value >= 0 ? "positive" : "negative";
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 const emptyState = (title, copy) => `<div class="empty-state"><strong>${title}</strong><p>${copy}</p></div>`;
-const routes = ["overview", "cashflow", "holdings", "trades", "watchlist", "notes"];
-const routeNames = { overview: "投资总览", holdings: "我的持仓", trades: "交易记录", cashflow: "分红现金流", watchlist: "观察清单", notes: "投资笔记" };
+const routes = ["overview", "cashflow", "holdings", "trades", "lookthrough", "notes"];
+const routeNames = { overview: "投资总览", holdings: "我的持仓", trades: "交易记录", cashflow: "分红现金流", lookthrough: "穿透分析", notes: "投资笔记" };
 const colors = ["#244b40", "#c75932", "#5b7e68", "#d58a5f", "#87a28b", "#b9754d", "#6d9278", "#db9b73"];
 const riskGroups = [
   { name: "居民消费", industries: ["食品饮料", "家用电器"] },
@@ -68,7 +68,6 @@ function renderHeader() {
   $("#first-trade-date").textContent = data.firstTradeDate;
   $("#nav-holding-count").textContent = data.stats.holdingCount;
   $("#nav-trade-count").textContent = data.trades.length;
-  $("#nav-watchlist-count").textContent = data.watchlist?.stocks?.length || 0;
   $("#nav-note-count").textContent = window.LUMOS_NOTES?.length || 0;
   $("#trade-total-heading").textContent = data.trades.length;
 }
@@ -716,54 +715,6 @@ function renderTrades() {
     </article>`).join("") : emptyState("没有匹配的交易", "请调整交易方向或搜索条件。");
 }
 
-function renderWatchlist() {
-  const stocks = data.watchlist?.stocks || [];
-  const pools = ["核心价值", "行业龙头"];
-  $("#watchlist-grid").innerHTML = stocks.length ? pools.map((pool) => {
-    const members = stocks.filter((stock) => stock.pool === pool);
-    if (!members.length) return "";
-    return `<section class="watch-pool" aria-label="${pool}">
-      <div class="watch-pool-head"><h2>${pool}</h2><span>${members.length} 只</span></div>
-      <div class="watch-cards">${members.map((stock) => `
-        <article class="watch-card">
-          <div class="watch-card-top"><div><h3>${esc(stock.name)}</h3><code>${esc(stock.code)}</code></div><div class="watch-price">${stock.closePrice == null ? "暂无" : number(stock.closePrice)}<small>${esc(stock.closeDate || "暂无行情")}</small></div></div>
-          <div class="watch-tags"><span>${esc(stock.industry || "未分类")}</span><span>${esc(stock.group || "待核实")}</span></div>
-          ${yieldHistory(stock)}
-          <dl>
-            <div><dt>纳入原因</dt><dd>${esc(stock.note || "未记录")}</dd></div>
-            <div><dt>买入资格</dt><dd>${esc(watchEligibility(stock))}</dd></div>
-          </dl>
-          <button class="watch-chart-button" type="button" data-watch-code="${esc(stock.code)}">查看 K 线 <span aria-hidden="true">↗</span></button>
-        </article>`).join("")}</div></section>`;
-  }).join("") : emptyState("暂无观察标的", "当前数据中没有非持仓观察标的。");
-}
-
-function watchEligibility(stock) {
-  if (stock.group === "待研究") return "待研究，尚未判断";
-  if (stock.group.includes("／")) return "估值与风险达标，股息率条件未满足";
-  if (stock.group === "第一档") return "符合估值与风险门槛";
-  if (stock.group === "第二档") return "符合，可小量买入";
-  if (stock.group === "第三档") return "暂不符合，继续观察";
-  if (stock.group === "第四档") return "不符合，暂不买入";
-  return "待核实";
-}
-
-function openWatchChart(code) {
-  const stock = data.watchlist?.stocks.find((item) => item.code === code);
-  if (!stock) return;
-  $("#dialog-content").innerHTML = `
-    <div class="dialog-hero"><p class="eyebrow">观察清单 · ${esc(stock.pool)} · ${esc(stock.industry)}</p><h2 id="dialog-title">${esc(stock.name)}<small>${esc(stock.code)}</small></h2><p>收盘价 ${stock.closePrice == null ? "暂无" : number(stock.closePrice)} · ${esc(stock.closeDate || "暂无行情")}</p></div>
-    <div class="dialog-body watch-dialog-body">${yieldHistory(stock, true)}${priceChart(stock)}<p class="dialog-disclaimer">日 K 线为不复权收盘数据，仅供查看历史价格。</p></div>`;
-  chartState.holding = stock;
-  $("#holding-dialog").showModal();
-  requestAnimationFrame(() => {
-    drawKline();
-    const scroll = $("#chart-scroll");
-    scroll.scrollLeft = scroll.scrollWidth;
-    drawKline();
-  });
-}
-
 function renderNotes() {
   const posts = window.LUMOS_NOTES || [];
   $("#notes-list").innerHTML = posts.length ? posts.map((post) => `
@@ -845,8 +796,97 @@ function showNote(id) {
   return true;
 }
 
+function setupLookthrough() {
+  const exposure = data.lookthrough;
+  if (!exposure) return;
+  const pageSize = 40;
+  let visible = pageSize;
+  const share = (value) => exposure.total ? value / exposure.total * 100 : 0;
+  const pct = (value) => `${number(share(value))}%`;
+  const group = $("#exposure-group");
+  const search = $("#exposure-search");
+  const market = $("#exposure-market");
+  const more = $("#exposure-more");
+  const rows = $("#exposure-rows");
+
+  $("#lookthrough-overview").innerHTML = [
+    ["股票与 ETF 市值", money(exposure.total)],
+    ["已识别底层标的", `${exposure.securities.length} 只`],
+    ["ETF 间接敞口", `${money(exposure.etf - exposure.unallocated)} · ${pct(exposure.etf - exposure.unallocated)}`],
+    ...(exposure.unallocated ? [["ETF 未拆分", `${money(exposure.unallocated)} · ${pct(exposure.unallocated)}`]] : []),
+  ].map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join("");
+
+  function renderRows() {
+    const query = search.value.trim().toLowerCase();
+    const [field, label] = group.value.split("|", 2);
+    const filtered = exposure.securities.filter((item) =>
+      (!query || `${item.name} ${item.code}`.toLowerCase().includes(query)) &&
+      (!market.value || market.value === item.market) &&
+      (!field || item[field] === label)
+    );
+    rows.innerHTML = filtered.slice(0, visible).map((item) => {
+      const name = `<strong>${esc(item.name)}</strong> <small>${esc(item.market)} · ${esc(item.code)}</small>`;
+      const fundLines = item.funds.map((fund) =>
+        `<li>${esc(fund.name)} <span>${money(fund.value)}</span></li>`).join("");
+      return `<tr>
+        <th scope="row">${fundLines ? `<details><summary>${name}</summary><ul>${fundLines}</ul></details>` : name}</th>
+        <td>${esc(item.industry)}<small>${esc(item.risk)}</small></td>
+        <td>${item.direct ? money(item.direct) : "—"}</td>
+        <td>${item.indirect ? money(item.indirect) : "—"}</td>
+        <td><strong>${money(item.value)}</strong></td><td>${pct(item.value)}</td>
+      </tr>`;
+    }).join("") || '<tr><td colspan="6">没有符合筛选条件的标的。</td></tr>';
+    $("#exposure-count").textContent = `显示 ${Math.min(visible, filtered.length)} / ${filtered.length} 只 · 人民币`;
+    more.hidden = filtered.length <= visible;
+  }
+
+  const reset = () => { visible = pageSize; renderRows(); };
+  function renderBars(selector, entries, field, label) {
+    const eligible = new Set(exposure.securities.map((item) => item[field]));
+    const options = entries.filter((item) => eligible.has(item.name)).map((item) =>
+      `<option value="${field}|${esc(item.name)}">${esc(item.name)}</option>`).join("");
+    group.insertAdjacentHTML("beforeend", `<optgroup label="${label}">${options}</optgroup>`);
+    const container = $(selector);
+    container.innerHTML = entries.map((item) => {
+      const contents = `<span>${esc(item.name)}</span><strong>${pct(item.value)}</strong>
+        <span class="lookthrough-track" aria-hidden="true"><i style="width:${share(item.value)}%"></i></span>`;
+      return eligible.has(item.name) ?
+        `<button type="button" data-group="${field}|${esc(item.name)}" aria-label="查看${esc(item.name)}标的，占组合${pct(item.value)}">${contents}</button>` :
+        `<div>${contents}</div>`;
+    }).join("");
+    container.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-group]");
+      if (!button) return;
+      group.value = button.dataset.group;
+      search.value = "";
+      market.value = "";
+      reset();
+      group.focus();
+    });
+  }
+
+  renderBars("#lookthrough-industries", exposure.industries, "industry", "行业");
+  renderBars("#lookthrough-risks", exposure.risks, "risk", "风险驱动");
+  $("#lookthrough-sources").innerHTML = exposure.sources.map((item) => `<li>
+    <strong>${esc(item.name)} <small>${esc(item.code)}</small></strong>
+    ${item.date ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.label)}</a> · 权重 ${esc(item.date)} · ${item.count} 只` : "成分权重待补充"}
+    ${item.closeDate ? ` · ETF 收盘 ${esc(item.closeDate)}` : ""}
+    ${item.unallocated ? ` · 未拆分 ${money(item.unallocated)}` : ""}
+    ${item.note ? `<span>${esc(item.note)}</span>` : ""}
+  </li>`).join("");
+  search.addEventListener("input", reset);
+  market.addEventListener("change", reset);
+  group.addEventListener("change", reset);
+  more.addEventListener("click", () => { visible += pageSize; renderRows(); });
+  renderRows();
+}
+
 function setRoute() {
   const [route, noteId] = location.hash.slice(1).split("/");
+  if (route === "watchlist") {
+    location.replace("#lookthrough");
+    return;
+  }
   const selected = routes.includes(route) ? route : "overview";
   $$("[data-view]").forEach((view) => { view.hidden = view.dataset.view !== selected; });
   $$("[data-route]").forEach((link) => {
@@ -905,10 +945,6 @@ function setupEvents() {
     renderTrades();
   }));
   $("#dialog-close").addEventListener("click", () => $("#holding-dialog").close());
-  $("#watchlist-grid").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-watch-code]");
-    if (button) openWatchChart(button.dataset.watchCode);
-  });
   $("#holding-dialog").addEventListener("click", (event) => {
     if (event.target !== event.currentTarget) return;
     const rect = event.currentTarget.getBoundingClientRect();
@@ -929,7 +965,7 @@ function init() {
   renderHoldings();
   renderTrades();
   renderCashFlow();
-  renderWatchlist();
+  setupLookthrough();
   renderNotes();
   setupHeroQuotes();
   setupEvents();

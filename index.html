@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#173a32">
   <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=a536a0ef473d">
   <title>Lumos · 投资记录</title>
-  <meta name="description" content="Lumos 投资记录：组合、持仓、交易、分红现金流、自选与笔记。">
-  <link rel="stylesheet" href="styles.css?v=7592233bd4ed">
+  <meta name="description" content="Lumos 投资记录：组合、持仓、交易、分红现金流、穿透分析与笔记。">
+  <link rel="stylesheet" href="styles.css?v=0c57947fbb10">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到主要内容</a>
@@ -24,9 +24,9 @@
     <nav class="nav-list">
       <a href="#overview" data-route="overview"><span class="nav-index">01</span>投资总览<span class="nav-arrow">↗</span></a>
       <a href="#cashflow" data-route="cashflow"><span class="nav-index">02</span>分红现金流<span class="nav-coin" aria-hidden="true">¥</span></a>
-      <a href="#holdings" data-route="holdings"><span class="nav-index">03</span>我的持仓<span class="nav-count" id="nav-holding-count"></span></a>
-      <a href="#trades" data-route="trades"><span class="nav-index">04</span>交易记录<span class="nav-count" id="nav-trade-count"></span></a>
-      <a href="#watchlist" data-route="watchlist"><span class="nav-index">05</span>观察清单<span class="nav-count" id="nav-watchlist-count"></span></a>
+      <a href="#lookthrough" data-route="lookthrough"><span class="nav-index">03</span>穿透分析<span class="nav-target" aria-hidden="true"><span class="nav-target-center"></span><span class="nav-target-arrow"></span></span></a>
+      <a href="#holdings" data-route="holdings"><span class="nav-index">04</span>我的持仓<span class="nav-count" id="nav-holding-count"></span></a>
+      <a href="#trades" data-route="trades"><span class="nav-index">05</span>交易记录<span class="nav-count" id="nav-trade-count"></span></a>
       <a href="#notes" data-route="notes"><span class="nav-index">06</span>投资笔记<span class="nav-count" id="nav-note-count"></span></a>
     </nav>
 
@@ -223,12 +223,43 @@
         </section>
       </section>
 
-      <section class="view" id="view-watchlist" data-view="watchlist" aria-labelledby="watchlist-title" hidden>
+      <section class="view" id="view-lookthrough" data-view="lookthrough" aria-labelledby="lookthrough-title" hidden>
         <div class="page-heading">
-          <div><p class="eyebrow">WAIT & WATCH</p><h1 id="watchlist-title">观察清单</h1></div>
-          <p>关注标的的收盘价、纳入原因与买入资格。<br>2023—2025 年股息率按所示价格计算；列入清单不代表计划买入。</p>
+          <div><h1 id="lookthrough-title">穿透分析</h1></div>
+          <p>合并直接持股与 ETF 的底层股票敞口。<br>以股票与 ETF 收盘市值为基准。</p>
         </div>
-        <div class="watchlist-grid" id="watchlist-grid"></div>
+        <div class="lookthrough-overview" id="lookthrough-overview"></div>
+        <div class="lookthrough-distributions">
+          <article class="paper-panel">
+            <div class="subheading"><h2>行业分布</h2><span>占组合市值</span></div>
+            <div class="lookthrough-bars" id="lookthrough-industries"></div>
+          </article>
+          <article class="paper-panel">
+            <div class="subheading"><h2>风险分布</h2><span>按行业归入主要风险驱动</span></div>
+            <div class="lookthrough-bars" id="lookthrough-risks"></div>
+          </article>
+        </div>
+        <section class="content-section" aria-labelledby="exposure-title">
+          <div class="section-heading"><div><h2 id="exposure-title">底层标的</h2></div><p>按合计敞口排序，展开标的可查看各只 ETF 的贡献</p></div>
+          <div class="toolbar lookthrough-toolbar">
+            <label class="search-box"><span aria-hidden="true">⌕</span><input id="exposure-search" type="search" placeholder="搜索名称或代码" aria-label="搜索底层标的"></label>
+            <label class="select-box"><span>市场</span><select id="exposure-market"><option value="">全部市场</option><option>A股</option><option>港股</option></select></label>
+            <label class="select-box"><span>分类</span><select id="exposure-group"><option value="">全部行业及风险</option></select></label>
+          </div>
+          <p class="result-line" id="exposure-count" aria-live="polite"></p>
+          <div class="lookthrough-table-wrap" tabindex="0" role="region" aria-label="底层标的敞口表">
+            <table class="lookthrough-table">
+              <thead><tr><th scope="col">标的</th><th scope="col">行业 / 风险</th><th scope="col">直接持股</th><th scope="col">ETF 敞口</th><th scope="col">合计敞口</th><th scope="col">占组合</th></tr></thead>
+              <tbody id="exposure-rows"></tbody>
+            </table>
+          </div>
+          <button class="lookthrough-more" id="exposure-more" type="button" hidden>显示更多标的</button>
+        </section>
+        <details class="lookthrough-sources" open>
+          <summary>ETF 成分来源与口径</summary>
+          <p>ETF 敞口按其市值乘以公开成分权重估算。指数或申赎篮子作为基金实际持仓的近似，行情与权重日期各自标出。A 股与港股按证券代码分别列示。行业采用申万一级口径，港股按主营业务映射。风险分布展示市值归因，每只标的归入一个主要风险驱动。</p>
+          <ul id="lookthrough-sources"></ul>
+        </details>
       </section>
 
       <section class="view" id="view-notes" data-view="notes" aria-labelledby="notes-title" hidden>
@@ -252,9 +283,9 @@
     <div id="dialog-content"></div>
   </dialog>
 
-  <script src="data.js?v=e44eac8c1334"></script>
-  <script src="performance-data.js?v=0ca2809cc76a"></script>
+  <script src="data.js?v=7504e71c6e04"></script>
+  <script src="performance-data.js?v=bb51f9edbc25"></script>
   <script src="notes-data.js?v=32137b585c21"></script>
-  <script src="app.js?v=049d7e359bf5"></script>
+  <script src="app.js?v=a62da09ea5fe"></script>
 </body>
 </html>
